@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>واس الزراعية 🥔 | نظام إدارة متكامل</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{ -webkit-tap-highlight-color: transparent; }
+    body{ font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #f5f5f5 0%, #e8f5e9 100%); min-height: 100vh; padding-bottom: 80px; }
+    .card{ background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 16px; }
+    .btn-primary{ background: linear-gradient(135deg, #2e7d32, #1b5e20); color: white; padding: 14px 24px; border-radius: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+    .btn-outline{ border: 2px solid #2e7d32; color: #2e7d32; padding: 12px 20px; border-radius: 14px; background: transparent; font-weight: 500; }
+    .btn-danger{ background: #dc2626; color: white; padding: 8px 16px; border-radius: 12px; }
+    .btn-success{ background: #059669; color: white; padding: 8px 16px; border-radius: 12px; }
+    input, select, textarea{ border: 2px solid #e5e7eb; border-radius: 14px; padding: 14px 16px; width: 100%; margin-bottom: 12px; font-size: 16px; font-family: 'Cairo', sans-serif; }
+    .bottom-nav{ position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 8px 0; z-index: 100; }
+    .nav-item{ display: flex; flex-direction: column; align-items: center; padding: 8px 4px; color: #6b7280; font-size: 11px; background: none; border: none; }
+    .nav-item.active{ color: #2e7d32; font-weight: 600; }
+    .toast{ position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-150%); background: white; padding: 14px 20px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 1000; transition: transform 0.3s ease; }
+    .toast.show{ transform: translateX(-50%) translateY(0); }
+    .modal{ position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
+    .modal-content{ background: white; border-radius: 24px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .hidden{ display: none !important; }
+    .farm-item{ cursor: pointer; transition: 0.2s; }
+    .farm-item:hover{ background: #fef3c7 !important; transform: translateX(-4px); }
+    .age-badge{ background: #2e7d32; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+    .lang-btn { background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: 0.2s; }
+    .lang-btn:hover { background: rgba(255,255,255,0.3); }
+  </style>
+</head>
+<body class="p-3">
+
+<div id="toastContainer"></div>
+
+<!-- ==================== شاشة تسجيل الدخول ==================== -->
+<div id="authScreen" class="min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+    <div class="text-center mb-6">
+      <i class="fas fa-seedling text-5xl text-green-600 mb-3"></i>
+      <h2 class="text-2xl font-bold" data-i18n="app_title">واس الزراعية</h2>
+      <p class="text-gray-500 text-sm" data-i18n="app_subtitle">نظام إدارة مزرعة البطاطس</p>
+    </div>
+    <input type="text" id="loginUsername" placeholder="اسم المستخدم" data-i18n-placeholder="username_placeholder" class="w-full mb-3">
+    <input type="password" id="loginPassword" placeholder="كلمة المرور" data-i18n-placeholder="password_placeholder" class="w-full mb-4">
+    <button onclick="login()" class="btn-primary" data-i18n="login_btn">دخول</button>
+    <div class="mt-4 pt-4 border-t text-center">
+      <p class="text-xs text-gray-500 mb-2">👑 admin / admin123 | 👨‍🌾 eng / eng123</p>
+      <button onclick="showRegisterScreen()" class="text-green-600 text-sm font-bold"><i class="fas fa-user-plus"></i> <span data-i18n="create_account">إنشاء حساب جديد</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== شاشة التسجيل ==================== -->
+<div id="registerScreen" class="min-h-screen flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+    <div class="text-center mb-6">
+      <i class="fas fa-user-plus text-5xl text-green-600 mb-3"></i>
+      <h2 class="text-2xl font-bold" data-i18n="create_new_account">إنشاء حساب جديد</h2>
+      <p class="text-gray-500 text-sm" data-i18n="create_account_desc">قم بإنشاء حساب للوصول إلى النظام</p>
+    </div>
+    <input type="text" id="regUsername" placeholder="اسم المستخدم" data-i18n-placeholder="username_placeholder" class="w-full mb-3">
+    <input type="password" id="regPassword" placeholder="كلمة المرور" data-i18n-placeholder="password_placeholder" class="w-full mb-3">
+    <select id="regRole" class="w-full mb-4">
+      <option value="engineer" data-i18n="engineer_role">👨‍🌾 مهندس زراعي</option>
+      <option value="admin" data-i18n="admin_role">👑 مدير</option>
+    </select>
+    <button onclick="register()" class="btn-primary" data-i18n="create_btn">إنشاء حساب</button>
+    <button onclick="showLoginScreen()" class="btn-outline w-full mt-3"><span data-i18n="back_to_login">🔙 العودة لتسجيل الدخول</span></button>
+  </div>
+</div>
+
+<!-- ==================== التطبيق الرئيسي (بعد الدخول) ==================== -->
+<div id="mainApp" class="hidden max-w-lg mx-auto">
+  <header class="bg-gradient-to-r from-green-900 to-green-800 text-white p-5 rounded-3xl shadow-xl mb-4">
+    <div class="flex justify-between items-center">
+      <div><h1 class="text-xl font-bold" data-i18n="app_title">واس الزراعية</h1><p class="text-xs" data-i18n="app_subtitle_main">إدارة الحقول والحصاد</p></div>
+      <div class="flex gap-2 items-center">
+        <div class="lang-btn" onclick="toggleLanguage()" style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 20px; font-size: 11px; cursor: pointer;">
+          <i class="fas fa-globe"></i> <span id="langToggleText">English</span>
+        </div>
+        <span id="userRoleBadge" class="bg-blue-600/30 px-3 py-1 rounded-full text-xs"></span>
+        <span id="userNameBadge" class="bg-amber-600/30 px-3 py-1 rounded-full text-xs"></span>
+        <button onclick="logout()" class="bg-red-600/30 px-3 py-1 rounded-full text-sm"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </div>
+    <div class="mt-4 grid grid-cols-4 gap-1 text-center text-xs">
+      <div class="bg-white/10 rounded-lg p-2"><i class="fas fa-tractor"></i><p id="headerFarms" class="font-bold">0</p><p data-i18n="fields_label">حقول</p></div>
+      <div class="bg-white/10 rounded-lg p-2"><i class="fas fa-coins"></i><p id="headerProfit" class="font-bold">0</p><p data-i18n="profit_label">ربح</p></div>
+      <div class="bg-white/10 rounded-lg p-2"><i class="fas fa-weight-hanging"></i><p id="headerProd" class="font-bold">0</p><p data-i18n="tons_label">طن</p></div>
+      <div class="bg-white/10 rounded-lg p-2"><i class="fas fa-truck"></i><p id="headerHarvests" class="font-bold">0</p><p data-i18n="harvests_label">حصاد</p></div>
+    </div>
+  </header>
+
+  <!-- تبويب الحقول -->
+  <section id="farmsSection" class="tab-content fade-in">
+    <div class="card"><h2 class="font-bold mb-4" data-i18n="add_field_title">➕ إضافة حقل</h2>
+      <form onsubmit="event.preventDefault(); addFarm();">
+        <input type="text" id="farmName" placeholder="اسم الحقل" data-i18n-placeholder="field_name_placeholder" required>
+        <input type="number" id="farmArea" placeholder="المساحة (فدان)" data-i18n-placeholder="area_placeholder" step="0.01" required>
+        <input type="date" id="farmPlantDate" required>
+        <input type="text" id="farmSeedType" placeholder="نوع التقاوي" data-i18n-placeholder="seed_type_placeholder" required>
+        <button type="submit" class="btn-primary"><i class="fas fa-save"></i> <span data-i18n="save_btn">حفظ</span></button>
+      </form>
+    </div>
+    <div class="card"><h3 class="font-bold mb-3" data-i18n="registered_fields">الحقول المسجلة (اضغط على أي حقل للتفاصيل)</h3><div id="farmsList" class="space-y-2"></div></div>
+  </section>
+
+  <!-- تبويب الإنتاج -->
+  <section id="productionSection" class="tab-content hidden fade-in">
+    <div class="card"><h2 class="font-bold mb-4" data-i18n="record_production_title">📊 تسجيل الإنتاج</h2>
+      <form onsubmit="event.preventDefault(); addProduction();">
+        <select id="prodFarmSelect" required></select>
+        <input type="date" id="prodDate" required>
+        <div class="grid grid-cols-2 gap-3"><input type="number" id="prodQuantity" placeholder="الإنتاج (طن)" data-i18n-placeholder="production_placeholder" step="0.01" required><input type="number" id="prodPricePerUnit" placeholder="سعر الطن (ج.س)" data-i18n-placeholder="price_placeholder" required></div>
+        <div class="grid grid-cols-2 gap-3"><input type="number" id="costLabor" placeholder="العمالة" data-i18n-placeholder="labor_cost_placeholder" value="0"><input type="number" id="costSeeds" placeholder="التقاوي" data-i18n-placeholder="seeds_cost_placeholder" value="0"><input type="number" id="costFertilizer" placeholder="الأسمدة" data-i18n-placeholder="fertilizer_cost_placeholder" value="0"><input type="number" id="costPesticides" placeholder="المبيدات" data-i18n-placeholder="pesticides_cost_placeholder" value="0"></div>
+        <textarea id="prodNotes" rows="2" placeholder="ملاحظات" data-i18n-placeholder="notes_placeholder"></textarea>
+        <button type="submit" class="btn-primary"><i class="fas fa-save"></i> <span data-i18n="save_btn">حفظ</span></button>
+      </form>
+    </div>
+    <div class="card"><h3 class="font-bold mb-3" data-i18n="production_log">سجل الإنتاج</h3><div id="productionList" class="space-y-2"></div></div>
+  </section>
+
+  <!-- تبويب العمليات (مع حقل تقرير المهندس) -->
+  <section id="operationsSection" class="tab-content hidden fade-in">
+    <div class="card"><h2 class="font-bold mb-4" data-i18n="record_operation_title">📝 تسجيل عملية</h2>
+      <form onsubmit="event.preventDefault(); addOperation();">
+        <select id="opType" required>
+          <option value="" data-i18n="select_operation">نوع العملية</option>
+          <option value="حرث" data-i18n="plowing">🚜 حرث</option>
+          <option value="زراعة" data-i18n="planting">🌱 زراعة</option>
+          <option value="ري" data-i18n="irrigation">💧 ري</option>
+          <option value="تسميد" data-i18n="fertilizing">🌿 تسميد</option>
+          <option value="رش مبيدات" data-i18n="spraying">🧪 رش مبيدات</option>
+          <option value="حصاد" data-i18n="harvesting">✂️ حصاد</option>
+        </select>
+        <select id="opFarmSelect" required></select>
+        <input type="date" id="opDate" required>
+        <input type="text" id="opProductUsed" placeholder="المنتجات المستخدمة" data-i18n-placeholder="products_used_placeholder">
+        <textarea id="opNote" rows="2" placeholder="التفاصيل" data-i18n-placeholder="operation_details_placeholder" required></textarea>
+        <!-- حقل تقرير المهندس الجديد -->
+        <textarea id="engineerReport" rows="3" placeholder="تقرير المهندس (التفاصيل الفنية)" data-i18n-placeholder="engineer_report_placeholder" class="border-2 border-amber-300 bg-amber-50"></textarea>
+        <button type="submit" class="btn-primary"><i class="fas fa-pen"></i> <span data-i18n="record_btn">تسجيل</span></button>
+      </form>
+    </div>
+    <div class="card"><h3 class="font-bold mb-3" data-i18n="operations_log">سجل العمليات</h3><div id="operationsList" class="space-y-2"></div></div>
+  </section>
+
+  <!-- تبويب الحصاد -->
+  <section id="harvestSection" class="tab-content hidden fade-in">
+    <div class="card"><h2 class="font-bold mb-4 text-amber-700" data-i18n="record_harvest_title">🚜 تسجيل حصاد جديد</h2>
+      <form onsubmit="event.preventDefault(); addHarvest();">
+        <select id="harvestFarmSelect" required><option value="" data-i18n="select_field">اختر الحقل</option></select>
+        <input type="date" id="harvestDate" required>
+        <div class="grid grid-cols-2 gap-3"><input type="text" id="cartNumber" placeholder="رقم العربة (أي رقم)" data-i18n-placeholder="cart_number_placeholder" required><select id="loadType" onchange="toggleBoxInput()" required><option value="shwal" data-i18n="sacks">شوالات</option><option value="box" data-i18n="boxes">صناديق</option></select></div>
+        <div id="boxToShwalDiv" class="hidden"><input type="number" id="shwalPerBox" placeholder="عدد الشوالات في الصندوق" data-i18n-placeholder="sacks_per_box_placeholder" value="10"></div>
+        <div class="grid grid-cols-2 gap-3"><input type="number" id="harvestQuantity" placeholder="الكمية" data-i18n-placeholder="quantity_placeholder" step="0.01" required><input type="number" id="sackWeight" placeholder="وزن الشوال (كجم)" data-i18n-placeholder="sack_weight_placeholder" value="50" required></div>
+        <div class="bg-amber-50 p-3 rounded-xl mb-3"><p class="text-sm font-bold" data-i18n="load_summary_label">📦 ملخص الحمولة:</p><p id="loadSummary" class="text-amber-800 font-bold">-</p></div>
+        <textarea id="harvestNotes" rows="2" placeholder="ملاحظات" data-i18n-placeholder="notes_placeholder"></textarea>
+        <button type="submit" class="btn-primary bg-amber-700"><i class="fas fa-save"></i> <span data-i18n="record_harvest_btn">تسجيل الحصاد</span></button>
+      </form>
+    </div>
+    <div class="card"><div class="flex justify-between items-center mb-3"><h3 class="font-bold" data-i18n="harvest_log">سجل الحصاد</h3><button onclick="printHarvestReport()" class="bg-red-600 text-white px-4 py-2 rounded-xl text-sm"><i class="fas fa-print"></i> <span data-i18n="print_pdf">طباعة PDF</span></button></div><div id="harvestList" class="space-y-2"></div></div>
+  </section>
+
+  <!-- تبويب التقارير -->
+  <section id="profitsSection" class="tab-content hidden fade-in">
+    <div class="card"><h2 class="font-bold mb-4" data-i18n="profits_title">💰 الأرباح</h2>
+      <div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-green-700 text-white p-4 rounded-xl text-center"><p data-i18n="net_profit">صافي الربح</p><p id="totalNetProfit" class="text-2xl font-bold">0</p></div><div class="bg-amber-600 text-white p-4 rounded-xl text-center"><p data-i18n="ton_price">سعر الطن</p><input type="number" id="dailyPricePerTon" class="bg-white/20 text-white font-bold p-2 rounded-lg w-full" value="15000"></div></div>
+      <div class="bg-gray-50 p-3 rounded-xl mb-4"><canvas id="profitChart" height="150"></canvas></div>
+      <div id="profitDetails" class="space-y-3"></div>
+    </div>
+  </section>
+</div>
+
+<!-- نافذة تفاصيل الحقل -->
+<div id="farmModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="bg-green-700 text-white p-4 rounded-t-2xl flex justify-between items-center"><h3 class="font-bold text-lg" id="modalFarmName"></h3><button onclick="closeModal()" class="text-white text-2xl">&times;</button></div>
+    <div class="p-4">
+      <div class="bg-gray-50 p-3 rounded-xl mb-4" id="farmInfo"></div>
+      <div class="flex gap-2 mb-4"><button onclick="exportFarmToPDF()" class="btn-primary text-sm py-2 flex-1"><i class="fas fa-file-pdf"></i> <span data-i18n="export_pdf">تصدير PDF كامل</span></button></div>
+      <div class="bg-amber-50 p-3 rounded-xl mb-4"><h4 class="font-bold mb-2 text-amber-700" data-i18n="add_fertilizer_dose">➕ إضافة جرعة تسميد</h4>
+        <div class="grid grid-cols-2 gap-2 mb-2"><input type="text" id="fertName" placeholder="نوع السماد" data-i18n-placeholder="fertilizer_type_placeholder" class="text-sm p-2 rounded-lg"><input type="number" id="fertAmount" placeholder="الكمية (كجم/فدان)" data-i18n-placeholder="fertilizer_amount_placeholder" class="text-sm p-2 rounded-lg"></div>
+        <div class="grid grid-cols-2 gap-2 mb-2"><input type="number" id="fertDays" placeholder="بعد كم يوم من الزراعة" data-i18n-placeholder="days_after_planting_placeholder"><input type="date" id="fertDate" class="text-sm p-2 rounded-lg"></div>
+        <textarea id="fertNotes" rows="1" placeholder="ملاحظات" data-i18n-placeholder="notes_placeholder" class="text-sm p-2 rounded-lg mb-2"></textarea>
+        <button onclick="addFertilizerDose()" class="btn-primary text-sm py-2"><i class="fas fa-plus"></i> <span data-i18n="add_dose_btn">إضافة الجرعة</span></button>
+      </div>
+      <div id="fertilizerProgramContainer"><h4 class="font-bold mb-2 text-amber-700" data-i18n="fertilizer_program">🌿 برنامج التسميد</h4><div id="fertilizerProgramList" class="space-y-2 max-h-64 overflow-y-auto mb-4"></div></div>
+      <h4 class="font-bold mb-2" data-i18n="farm_operations">📋 العمليات المسجلة في هذا الحقل</h4>
+      <div id="modalOperationsList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav no-print">
+  <button onclick="showTab('farms')" class="nav-item active" id="navFarms"><i class="fas fa-tractor"></i><span data-i18n="nav_fields">الحقول</span></button>
+  <button onclick="showTab('production')" class="nav-item" id="navProduction"><i class="fas fa-chart-simple"></i><span data-i18n="nav_production">الإنتاج</span></button>
+  <button onclick="showTab('operations')" class="nav-item" id="navOperations"><i class="fas fa-clipboard-list"></i><span data-i18n="nav_operations">العمليات</span></button>
+  <button onclick="showTab('harvest')" class="nav-item" id="navHarvest"><i class="fas fa-truck"></i><span data-i18n="nav_harvest">حصاد</span></button>
+  <button onclick="showTab('profits')" class="nav-item" id="navProfits"><i class="fas fa-coins"></i><span data-i18n="nav_reports">التقارير</span></button>
+</nav>
+
+<script>
+  // ==================== إعدادات التخزين ====================
+  const STORAGE_KEYS = {
+    USERS: 'wase_users', FARMS: 'wase_farms', PRODUCTIONS: 'wase_productions', 
+    OPERATIONS: 'wase_operations', HARVESTS: 'wase_harvests', 
+    FERTILIZER_PLANS: 'wase_fertilizer_plans', CURRENT_USER: 'wase_current_user', 
+    SETTINGS: 'wase_settings', LANGUAGE: 'wase_language'
+  };
+  
+  // ==================== نظام الترجمة ====================
+  let currentLang = localStorage.getItem(STORAGE_KEYS.LANGUAGE) || 'ar';
+  
+  const translations = {
+    ar: {
+      app_title: "واس الزراعية",
+      app_subtitle: "نظام إدارة مزرعة البطاطس",
+      app_subtitle_main: "إدارة الحقول والحصاد",
+      username_placeholder: "اسم المستخدم",
+      password_placeholder: "كلمة المرور",
+      login_btn: "دخول",
+      create_account: "إنشاء حساب جديد",
+      create_new_account: "إنشاء حساب جديد",
+      create_account_desc: "قم بإنشاء حساب للوصول إلى النظام",
+      engineer_role: "👨‍🌾 مهندس زراعي",
+      admin_role: "👑 مدير",
+      create_btn: "إنشاء حساب",
+      back_to_login: "🔙 العودة لتسجيل الدخول",
+      fields_label: "حقول",
+      profit_label: "ربح",
+      tons_label: "طن",
+      harvests_label: "حصاد",
+      add_field_title: "➕ إضافة حقل",
+      field_name_placeholder: "اسم الحقل",
+      area_placeholder: "المساحة (فدان)",
+      seed_type_placeholder: "نوع التقاوي",
+      save_btn: "حفظ",
+      registered_fields: "الحقول المسجلة (اضغط على أي حقل للتفاصيل)",
+      record_production_title: "📊 تسجيل الإنتاج",
+      production_placeholder: "الإنتاج (طن)",
+      price_placeholder: "سعر الطن (ج.س)",
+      labor_cost_placeholder: "العمالة",
+      seeds_cost_placeholder: "التقاوي",
+      fertilizer_cost_placeholder: "الأسمدة",
+      pesticides_cost_placeholder: "المبيدات",
+      notes_placeholder: "ملاحظات",
+      production_log: "سجل الإنتاج",
+      record_operation_title: "📝 تسجيل عملية",
+      select_operation: "نوع العملية",
+      plowing: "🚜 حرث",
+      planting: "🌱 زراعة",
+      irrigation: "💧 ري",
+      fertilizing: "🌿 تسميد",
+      spraying: "🧪 رش مبيدات",
+      harvesting: "✂️ حصاد",
+      products_used_placeholder: "المنتجات المستخدمة",
+      operation_details_placeholder: "التفاصيل",
+      engineer_report_placeholder: "تقرير المهندس (التفاصيل الفنية)",
+      record_btn: "تسجيل",
+      operations_log: "سجل العمليات",
+      record_harvest_title: "🚜 تسجيل حصاد جديد",
+      select_field: "اختر الحقل",
+      cart_number_placeholder: "رقم العربة (أي رقم)",
+      sacks: "شوالات",
+      boxes: "صناديق",
+      sacks_per_box_placeholder: "عدد الشوالات في الصندوق",
+      quantity_placeholder: "الكمية",
+      sack_weight_placeholder: "وزن الشوال (كجم)",
+      load_summary_label: "📦 ملخص الحمولة:",
+      record_harvest_btn: "تسجيل الحصاد",
+      harvest_log: "سجل الحصاد",
+      print_pdf: "طباعة PDF",
+      profits_title: "💰 الأرباح",
+      net_profit: "صافي الربح",
+      ton_price: "سعر الطن",
+      export_pdf: "تصدير PDF كامل",
+      add_fertilizer_dose: "➕ إضافة جرعة تسميد",
+      fertilizer_type_placeholder: "نوع السماد",
+      fertilizer_amount_placeholder: "الكمية (كجم/فدان)",
+      days_after_planting_placeholder: "بعد كم يوم من الزراعة",
+      add_dose_btn: "إضافة الجرعة",
+      fertilizer_program: "🌿 برنامج التسميد",
+      farm_operations: "📋 العمليات المسجلة في هذا الحقل",
+      nav_fields: "الحقول",
+      nav_production: "الإنتاج",
+      nav_operations: "العمليات",
+      nav_harvest: "حصاد",
+      nav_reports: "التقارير",
+      no_data: "لا توجد بيانات",
+      delete: "حذف",
+      complete: "تنفيذ",
+      profit: "الربح",
+      revenue: "الإيرادات",
+      costs: "التكاليف"
+    },
+    en: {
+      app_title: "Wase Agricultural",
+      app_subtitle: "Potato Farm Management System",
+      app_subtitle_main: "Field & Harvest Management",
+      username_placeholder: "Username",
+      password_placeholder: "Password",
+      login_btn: "Login",
+      create_account: "Create New Account",
+      create_new_account: "Create New Account",
+      create_account_desc: "Create an account to access the system",
+      engineer_role: "👨‍🌾 Agricultural Engineer",
+      admin_role: "👑 Admin",
+      create_btn: "Create Account",
+      back_to_login: "🔙 Back to Login",
+      fields_label: "Fields",
+      profit_label: "Profit",
+      tons_label: "Tons",
+      harvests_label: "Harvests",
+      add_field_title: "➕ Add Field",
+      field_name_placeholder: "Field Name",
+      area_placeholder: "Area (Feddans)",
+      seed_type_placeholder: "Seed Type",
+      save_btn: "Save",
+      registered_fields: "Registered Fields (Click any field for details)",
+      record_production_title: "📊 Record Production",
+      production_placeholder: "Production (Tons)",
+      price_placeholder: "Price per Ton (SDG)",
+      labor_cost_placeholder: "Labor",
+      seeds_cost_placeholder: "Seeds",
+      fertilizer_cost_placeholder: "Fertilizer",
+      pesticides_cost_placeholder: "Pesticides",
+      notes_placeholder: "Notes",
+      production_log: "Production Log",
+      record_operation_title: "📝 Record Operation",
+      select_operation: "Operation Type",
+      plowing: "🚜 Plowing",
+      planting: "🌱 Planting",
+      irrigation: "💧 Irrigation",
+      fertilizing: "🌿 Fertilizing",
+      spraying: "🧪 Spraying",
+      harvesting: "✂️ Harvesting",
+      products_used_placeholder: "Products Used",
+      operation_details_placeholder: "Details",
+      engineer_report_placeholder: "Engineer Report (Technical Details)",
+      record_btn: "Record",
+      operations_log: "Operations Log",
+      record_harvest_title: "🚜 Record New Harvest",
+      select_field: "Select Field",
+      cart_number_placeholder: "Cart Number (Any number)",
+      sacks: "Sacks",
+      boxes: "Boxes",
+      sacks_per_box_placeholder: "Number of sacks per box",
+      quantity_placeholder: "Quantity",
+      sack_weight_placeholder: "Sack Weight (kg)",
+      load_summary_label: "📦 Load Summary:",
+      record_harvest_btn: "Record Harvest",
+      harvest_log: "Harvest Log",
+      print_pdf: "Print PDF",
+      profits_title: "💰 Profits",
+      net_profit: "Net Profit",
+      ton_price: "Ton Price",
+      export_pdf: "Export Full PDF",
+      add_fertilizer_dose: "➕ Add Fertilizer Dose",
+      fertilizer_type_placeholder: "Fertilizer Type",
+      fertilizer_amount_placeholder: "Amount (kg/feddan)",
+      days_after_planting_placeholder: "Days after planting",
+      add_dose_btn: "Add Dose",
+      fertilizer_program: "🌿 Fertilizer Program",
+      farm_operations: "📋 Operations Recorded in this Field",
+      nav_fields: "Fields",
+      nav_production: "Production",
+      nav_operations: "Operations",
+      nav_harvest: "Harvest",
+      nav_reports: "Reports",
+      no_data: "No data available",
+      delete: "Delete",
+      complete: "Complete",
+      profit: "Profit",
+      revenue: "Revenue",
+      costs: "Costs"
+    }
+  };
+  
+  function t(key) {
+    return translations[currentLang][key] || key;
+  }
+  
+  function updateUILanguage() {
+    // تحديث جميع العناصر التي تحتوي على data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (key) el.innerHTML = t(key);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (key) el.placeholder = t(key);
+    });
+    document.getElementById('langToggleText').innerHTML = currentLang === 'ar' ? 'English' : 'عربي';
+    // تحديث اتجاه الصفحة
+    document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = currentLang;
+    // إعادة عرض البيانات لتحديث النصوص الديناميكية
+    renderAll();
+  }
+  
+  function toggleLanguage() {
+    currentLang = currentLang === 'ar' ? 'en' : 'ar';
+    localStorage.setItem(STORAGE_KEYS.LANGUAGE, currentLang);
+    updateUILanguage();
+    showToast(t('language_changed') || (currentLang === 'ar' ? 'تم تغيير اللغة إلى العربية' : 'Language changed to English'));
+  }
+  
+  let currentUser = null, currentUsername = null, currentUserRole = null;
+  let farmsData = [], productionsData = [], operationsData = [], harvestsData = [], fertilizerPlans = {};
+  let usersData = [];
+  let dataSettings = { pricePerTon: 15000 };
+  let profitChart, currentModalFarm = null;
+
+  // ==================== دوال مساعدة ====================
+  function showToast(msg, type='success') { 
+    let tDiv=document.createElement('div'); tDiv.className=`toast ${type}`; 
+    tDiv.innerHTML=`<i class="fas fa-${type==='success'?'check-circle':'exclamation-triangle'}"></i><span>${msg}</span>`; 
+    document.getElementById('toastContainer').appendChild(tDiv); 
+    setTimeout(()=>tDiv.classList.add('show'),10); 
+    setTimeout(()=>{tDiv.classList.remove('show');setTimeout(()=>tDiv.remove(),300);},3000); 
+  }
+  function generateId() { return Date.now().toString(36)+Math.random().toString(36).substr(2); }
+  function calculatePlantAge(plantDate) { if(!plantDate) return null; return Math.ceil((new Date() - new Date(plantDate)) / (1000*60*60*24)); }
+  function saveData() { 
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(usersData));
+    localStorage.setItem(STORAGE_KEYS.FARMS, JSON.stringify(farmsData)); 
+    localStorage.setItem(STORAGE_KEYS.PRODUCTIONS, JSON.stringify(productionsData)); 
+    localStorage.setItem(STORAGE_KEYS.OPERATIONS, JSON.stringify(operationsData)); 
+    localStorage.setItem(STORAGE_KEYS.HARVESTS, JSON.stringify(harvestsData)); 
+    localStorage.setItem(STORAGE_KEYS.FERTILIZER_PLANS, JSON.stringify(fertilizerPlans)); 
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(dataSettings)); 
+  }
+  function loadData() { 
+    let u=localStorage.getItem(STORAGE_KEYS.USERS); if(u) usersData=JSON.parse(u); else usersData=[{username:'admin',password:'admin123',role:'admin'},{username:'eng',password:'eng123',role:'engineer'}];
+    let f=localStorage.getItem(STORAGE_KEYS.FARMS); if(f) farmsData=JSON.parse(f); 
+    let p=localStorage.getItem(STORAGE_KEYS.PRODUCTIONS); if(p) productionsData=JSON.parse(p); 
+    let o=localStorage.getItem(STORAGE_KEYS.OPERATIONS); if(o) operationsData=JSON.parse(o); 
+    let h=localStorage.getItem(STORAGE_KEYS.HARVESTS); if(h) harvestsData=JSON.parse(h); 
+    let fp=localStorage.getItem(STORAGE_KEYS.FERTILIZER_PLANS); if(fp) fertilizerPlans=JSON.parse(fp); 
+    let s=localStorage.getItem(STORAGE_KEYS.SETTINGS); if(s) dataSettings=JSON.parse(s); 
+    saveData();
+  }
+
+  // ==================== دوال التسجيل والدخول ====================
+  window.login = function() { 
+    let username = document.getElementById('loginUsername').value.trim(); 
+    let password = document.getElementById('loginPassword').value; 
+    let user = usersData.find(u => u.username === username && u.password === password); 
+    if(user) { 
+      currentUser = user; currentUsername = username; currentUserRole = user.role; 
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify({username, role: user.role})); 
+      document.getElementById('authScreen').classList.add('hidden'); 
+      document.getElementById('mainApp').classList.remove('hidden'); 
+      document.getElementById('userRoleBadge').innerHTML = currentUserRole === 'admin' ? '👑 ' + t('admin_role').replace('👑 ', '') : '👨‍🌾 ' + t('engineer_role').replace('👨‍🌾 ', '');
+      document.getElementById('userNameBadge').innerHTML = `<i class="fas fa-user"></i> ${username}`;
+      renderAll(); showTab('farms'); showToast(`✅ ${t('welcome') || 'مرحباً'} ${username}`); 
+    } else { showToast('❌ ' + (t('invalid_credentials') || 'اسم المستخدم أو كلمة المرور غير صحيحة'), 'error'); } 
+  };
+  
+  window.register = function() { 
+    let username = document.getElementById('regUsername').value.trim(); 
+    let password = document.getElementById('regPassword').value; 
+    let role = document.getElementById('regRole').value; 
+    if(!username || !password) return showToast('❌ ' + (t('fill_all_fields') || 'أكمل جميع الحقول'), 'error'); 
+    if(usersData.find(u => u.username === username)) return showToast('❌ ' + (t('username_exists') || 'اسم المستخدم موجود بالفعل'), 'error'); 
+    usersData.push({ username, password, role }); 
+    saveData(); 
+    showToast('✅ ' + (t('account_created') || 'تم إنشاء الحساب بنجاح')); 
+    showLoginScreen(); 
+  };
+  
+  window.logout = function() { 
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER); 
+    currentUser = null; currentUsername = null; currentUserRole = null;
+    document.getElementById('mainApp').classList.add('hidden'); 
+    document.getElementById('authScreen').classList.remove('hidden'); 
+    showToast(t('logged_out') || 'تم تسجيل الخروج'); 
+  };
+  
+  function showRegisterScreen() { document.getElementById('authScreen').classList.add('hidden'); document.getElementById('registerScreen').classList.remove('hidden'); }
+  function showLoginScreen() { document.getElementById('registerScreen').classList.add('hidden'); document.getElementById('authScreen').classList.remove('hidden'); }
+  
+  // ==================== دوال الحقول ====================
+  window.addFarm = function() { 
+    let n=document.getElementById('farmName').value.trim(), a=parseFloat(document.getElementById('farmArea').value), s=document.getElementById('farmSeedType').value.trim(), d=document.getElementById('farmPlantDate').value; 
+    if(!n||!a||!s||!d) return showToast(t('fill_all_fields') || 'أكمل البيانات','error'); 
+    let newFarm={id:generateId(), name:n, area:a, seed:s, plantDate:d, owner:currentUsername}; 
+    farmsData.push(newFarm); fertilizerPlans[newFarm.id]=[]; saveData(); 
+    document.getElementById('farmName').value=''; renderFarms(); updateFarmSelects(); showToast(t('field_added') || 'تم إضافة الحقل'); 
+  };
+  window.deleteFarm = function(id) { if(confirm(t('delete_confirm') || 'حذف الحقل وجميع بياناته؟')){ farmsData=farmsData.filter(f=>f.id!==id); productionsData=productionsData.filter(p=>p.farmId!==id); operationsData=operationsData.filter(o=>o.farmId!==id); harvestsData=harvestsData.filter(h=>h.farmId!==id); delete fertilizerPlans[id]; saveData(); renderAll(); } };
+  
+  // ==================== دوال العمليات والإنتاج ====================
+  window.addProduction = function() { 
+    let fid=document.getElementById('prodFarmSelect').value, farm=farmsData.find(f=>f.id===fid), date=document.getElementById('prodDate').value, qty=parseFloat(document.getElementById('prodQuantity').value), price=parseFloat(document.getElementById('prodPricePerUnit').value); 
+    if(!fid||!date||!qty||!price) return showToast(t('fill_all_fields') || 'أكمل البيانات','error'); 
+    let costs={labor:parseFloat(document.getElementById('costLabor').value)||0, seeds:parseFloat(document.getElementById('costSeeds').value)||0, fertilizer:parseFloat(document.getElementById('costFertilizer').value)||0, pesticides:parseFloat(document.getElementById('costPesticides').value)||0}; 
+    let totalCost=costs.labor+costs.seeds+costs.fertilizer+costs.pesticides, revenue=qty*price, profit=revenue-totalCost; 
+    productionsData.push({id:generateId(), farmId:fid, farm:farm.name, date, qty, price, totalCost, revenue, profit, costs, notes:document.getElementById('prodNotes').value, owner:currentUsername}); 
+    saveData(); document.getElementById('prodQuantity').value=''; document.getElementById('prodPricePerUnit').value=''; renderProductions(); renderProfits(); updateChart(); updateHeader(); showToast(t('saved') || 'تم'); 
+  };
+  window.deleteProduction = function(id) { if(confirm(t('delete_confirm') || 'حذف؟')){ productionsData=productionsData.filter(p=>p.id!==id); saveData(); renderProductions(); renderProfits(); updateChart(); updateHeader(); } };
+  window.addOperation = function() { 
+    let type=document.getElementById('opType').value, fid=document.getElementById('opFarmSelect').value, farm=farmsData.find(f=>f.id===fid), date=document.getElementById('opDate').value, note=document.getElementById('opNote').value.trim(); 
+    let engineerReportVal = document.getElementById('engineerReport').value.trim();
+    if(!type||!fid||!date||!note) return showToast(t('fill_all_fields') || 'أكمل','error'); 
+    let fullNote = note;
+    if(engineerReportVal) {
+      fullNote = note + (currentLang === 'ar' ? '\n\n📝 تقرير المهندس: ' : '\n\n📝 Engineer Report: ') + engineerReportVal;
+    }
+    operationsData.push({id:generateId(), type, farmId:fid, farm:farm.name, date, note: fullNote, productUsed:document.getElementById('opProductUsed').value, engineerReport: engineerReportVal, owner:currentUsername}); 
+    saveData(); document.getElementById('opNote').value=''; document.getElementById('engineerReport').value=''; renderOperations(); if(currentModalFarm && currentModalFarm.id===fid) openFarmModal(fid); showToast(t('saved') || 'تم'); 
+  };
+  window.deleteOperation = function(id) { if(confirm(t('delete_confirm') || 'حذف؟')){ operationsData=operationsData.filter(o=>o.id!==id); saveData(); renderOperations(); if(currentModalFarm) openFarmModal(currentModalFarm.id); } };
+  
+  // ==================== دوال التسميد ====================
+  window.addFertilizerDose = function() { 
+    if(!currentModalFarm) return showToast(t('select_field_first') || 'اختر حقلاً أولاً','error'); 
+    let name=document.getElementById('fertName').value.trim(), amount=parseFloat(document.getElementById('fertAmount').value), days=parseInt(document.getElementById('fertDays').value), date=document.getElementById('fertDate').value, notes=document.getElementById('fertNotes').value; 
+    if(!name||!amount) return showToast(t('fill_all_fields') || 'أدخل نوع السماد والكمية','error'); 
+    if(!days&&!date) return showToast(t('specify_date_or_days') || 'حدد إما عدد الأيام أو التاريخ','error'); 
+    let newDose={id:generateId(), name, amount, days:days||null, date:date||null, notes, completed:false, notified:false, createdAt:new Date().toISOString()}; 
+    if(!fertilizerPlans[currentModalFarm.id]) fertilizerPlans[currentModalFarm.id]=[]; 
+    fertilizerPlans[currentModalFarm.id].push(newDose); saveData(); 
+    document.getElementById('fertName').value=''; document.getElementById('fertAmount').value=''; document.getElementById('fertDays').value=''; document.getElementById('fertDate').value=''; document.getElementById('fertNotes').value=''; 
+    showToast(t('dose_added') || 'تم إضافة الجرعة'); renderFertilizerProgram(); 
+  };
+  window.completeDose = function(doseId) { 
+    if(!currentModalFarm) return; 
+    let doses=fertilizerPlans[currentModalFarm.id]||[]; 
+    let dose=doses.find(d=>d.id===doseId); 
+    if(dose){ dose.completed=true; dose.completedDate=new Date().toISOString(); saveData(); showToast(t('dose_completed') || 'تم تسجيل تنفيذ الجرعة'); renderFertilizerProgram(); 
+    operationsData.push({id:generateId(), type:t('fertilizing') || 'تسميد', farmId:currentModalFarm.id, farm:currentModalFarm.name, date:new Date().toISOString().split('T')[0], note:(t('added_fertilizer') || `تم إضافة ${dose.name} بكمية ${dose.amount} كجم/فدان`), productUsed:dose.name, owner:currentUsername}); saveData(); renderOperations(); } 
+  };
+  window.deleteDose = function(doseId) { if(!currentModalFarm||!confirm(t('delete_confirm') || 'حذف الجرعة؟')) return; fertilizerPlans[currentModalFarm.id]=fertilizerPlans[currentModalFarm.id].filter(d=>d.id!==doseId); saveData(); renderFertilizerProgram(); showToast(t('deleted') || 'تم الحذف'); };
+  
+  // ==================== دوال الحصاد ====================
+  function toggleBoxInput() { document.getElementById('boxToShwalDiv').classList.toggle('hidden', document.getElementById('loadType').value !== 'box'); updateLoadSummary(); }
+  function updateLoadSummary() { let type=document.getElementById('loadType').value, qty=parseFloat(document.getElementById('harvestQuantity').value)||0, boxShwal=parseFloat(document.getElementById('shwalPerBox').value)||1, totalShwals=type==='box'?qty*boxShwal:qty, kg=totalShwals*(parseFloat(document.getElementById('sackWeight').value)||50); document.getElementById('loadSummary').innerHTML=`📦 ${totalShwals.toFixed(1)} ${t('sacks') || 'شوال'} | ⚖️ ${kg.toFixed(0)} ${t('kg') || 'كجم'} | 🚛 ${(kg/1000).toFixed(2)} ${t('tons') || 'طن'}`; }
+  window.addHarvest = function() { 
+    let fid=document.getElementById('harvestFarmSelect').value, farm=farmsData.find(f=>f.id===fid); 
+    if(!farm) return showToast(t('select_field') || 'اختر حقل','error'); 
+    let cartNumber = document.getElementById('cartNumber').value.trim(); 
+    if(cartNumber === "") return showToast(t('enter_cart_number') || 'أدخل رقم العربة','error'); 
+    let type=document.getElementById('loadType').value, qty=parseFloat(document.getElementById('harvestQuantity').value); 
+    if(isNaN(qty)||qty<=0) return showToast(t('valid_quantity') || 'كمية صحيحة','error'); 
+    let boxShwal=parseFloat(document.getElementById('shwalPerBox').value)||1, totalShwals=type==='box'?qty*boxShwal:qty, sackW=parseFloat(document.getElementById('sackWeight').value)||50, totalKg=totalShwals*sackW, totalTons=totalKg/1000; 
+    harvestsData.push({id:generateId(), farmId:fid, farmName:farm.name, date:document.getElementById('harvestDate').value, cartNumber:cartNumber, loadType:type, quantity:qty, shwalPerBox:boxShwal, totalShwals, sackWeight:sackW, totalKg, totalTons, notes:document.getElementById('harvestNotes').value, owner:currentUsername}); 
+    saveData(); renderHarvests(); document.getElementById('harvestQuantity').value=''; document.getElementById('cartNumber').value=''; showToast(t('harvest_recorded') || `تم تسجيل العربة ${cartNumber}`); 
+  };
+  window.deleteHarvest = function(id) { if(confirm(t('delete_confirm') || 'حذف عملية الحصاد؟')){ harvestsData=harvestsData.filter(h=>h.id!==id); saveData(); renderHarvests(); } };
+  window.printHarvestReport = function() { 
+    let filtered=currentUserRole!=='admin'?harvestsData.filter(h=>h.owner===currentUsername):harvestsData; 
+    if(filtered.length===0) return showToast(t('no_data') || 'لا توجد بيانات','warning'); 
+    let title = currentLang === 'ar' ? '🌾 تقرير الحصاد - واس الزراعية' : '🌾 Harvest Report - Wase Agricultural';
+    let dateLabel = currentLang === 'ar' ? 'التاريخ' : 'Date';
+    let userLabel = currentLang === 'ar' ? 'المستخدم' : 'User';
+    let farmLabel = currentLang === 'ar' ? 'الحقل' : 'Farm';
+    let cartLabel = currentLang === 'ar' ? 'رقم العربة' : 'Cart Number';
+    let loadLabel = currentLang === 'ar' ? 'نوع الحمولة' : 'Load Type';
+    let quantityLabel = currentLang === 'ar' ? 'الكمية' : 'Quantity';
+    let sacksLabel = currentLang === 'ar' ? 'إجمالي شوالات' : 'Total Sacks';
+    let weightLabel = currentLang === 'ar' ? 'الوزن (كجم)' : 'Weight (kg)';
+    let tonsLabel = currentLang === 'ar' ? 'الطن' : 'Tons';
+    let totalHarvestsLabel = currentLang === 'ar' ? 'إجمالي عمليات الحصاد' : 'Total Harvest Operations';
+    let sacksWord = currentLang === 'ar' ? 'شوال' : 'Sack';
+    
+    let html=`<html dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:Cairo;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:${currentLang === 'ar' ? 'right' : 'left'}}th{background:#2e7d32;color:white}</style></head><body><h1 style="color:#2e7d32;">${title}</h1><p>${dateLabel}: ${new Date().toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US')} | ${userLabel}: ${currentUsername}</p>`
+    +'<thead><tr><th>'+dateLabel+'</th><th>'+farmLabel+'</th><th>'+cartLabel+'</th><th>'+loadLabel+'</th><th>'+quantityLabel+'</th><th>'+sacksLabel+'</th><th>'+weightLabel+'</th><th>'+tonsLabel+'</th></tr></thead><tbody>';
+    filtered.forEach(h=>{html+=`<tr><td>${h.date}</td><td>${h.farmName}</td><td>${h.cartNumber}</td><td>${h.loadType==='box'?(currentLang === 'ar' ? 'صناديق' : 'Boxes'):(currentLang === 'ar' ? 'شوالات' : 'Sacks')}</td><td>${h.quantity}</td><td>${h.totalShwals}</td><td>${h.totalKg.toFixed(0)}</td><td>${h.totalTons.toFixed(2)}</td></tr>`;});
+    html+=`</tbody></table><p class="mt-4">📌 ${totalHarvestsLabel}: ${filtered.length}</p></body></html>`; 
+    let w=window.open('','_blank'); w.document.write(html); w.document.close(); w.print(); 
+  };
+  
+  // ==================== دوال العرض ====================
+  function renderFarms() { 
+    let list=document.getElementById('farmsList'), filtered=currentUserRole!=='admin'?farmsData.filter(f=>f.owner===currentUsername):farmsData; 
+    list.innerHTML=filtered.map(f=>{ let age=calculatePlantAge(f.plantDate); return `<div class="bg-amber-50 p-3 rounded-xl flex justify-between items-center farm-item" onclick="openFarmModal('${f.id}')"><div><strong>${f.name}</strong><br><span class="text-xs">${f.area} ${t('feddan') || 'فدان'} | ${f.seed}</span><br><span class="text-xs text-amber-600"><i class="fas fa-calendar-alt"></i> ${t('plant_age') || 'عمر النبات'}: ${age!==null?age+' '+ (t('day') || 'يوم'):t('not_specified') || 'غير محدد'}</span></div><button onclick="event.stopPropagation(); deleteFarm('${f.id}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs">${t('delete') || 'حذف'}</button></div>`; }).join(''); 
+    document.getElementById('headerFarms').innerHTML=filtered.length; 
+  }
+  function renderProductions() { 
+    let list=document.getElementById('productionList'), filtered=currentUserRole!=='admin'?productionsData.filter(p=>p.owner===currentUsername):productionsData; 
+    if(filtered.length===0){list.innerHTML='<div class="text-center text-gray-500">'+t('no_data')+'</div>';return;} 
+    list.innerHTML=filtered.map(p=>`<div class="bg-gray-50 p-3 rounded-xl"><div class="flex justify-between"><strong>${p.farm}</strong><button onclick="deleteProduction('${p.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></div><div>${p.date} | ${p.qty} ${t('tons') || 'طن'} × ${p.price} ${t('sdg') || 'ج.س'}</div><div class="font-bold ${p.profit>=0?'text-green-700':'text-red-700'}">${t('profit') || 'الربح'}: ${p.profit.toLocaleString()} ${t('sdg') || 'ج.س'}</div></div>`).join(''); 
+  }
+  function renderOperations() { 
+    let list=document.getElementById('operationsList'), filtered=currentUserRole!=='admin'?operationsData.filter(o=>o.owner===currentUsername):operationsData; 
+    if(filtered.length===0){list.innerHTML='<div class="text-center text-gray-500">'+t('no_data')+'</div>';return;} 
+    list.innerHTML=filtered.map(op=>`<div class="bg-gray-50 p-3 rounded-xl"><div class="flex justify-between"><span class="font-bold">${op.type}</span><button onclick="deleteOperation('${op.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></div><div class="text-xs">${op.farm} | ${op.date}</div><p class="text-sm">${op.note}</p>${op.engineerReport ? `<div class="text-xs text-amber-700 mt-2 border-t border-amber-200 pt-2"><i class="fas fa-clipboard-list"></i> <strong>${t('engineer_report') || 'تقرير المهندس'}:</strong> ${op.engineerReport}</div>` : ''}${op.productUsed?`<div class="text-xs text-amber-700">🧪 ${op.productUsed}</div>`:''}</div>`).join(''); 
+  }
+  function renderHarvests() { 
+    let container=document.getElementById('harvestList'), filtered=currentUserRole!=='admin'?harvestsData.filter(h=>h.owner===currentUsername):harvestsData; 
+    if(filtered.length===0){container.innerHTML='<div class="text-center text-gray-500">'+t('no_data')+'</div>'; document.getElementById('headerHarvests').innerHTML='0'; return;} 
+    container.innerHTML=filtered.map(h=>`<div class="bg-amber-50 p-3 rounded-xl border-r-4 border-amber-600"><div class="flex justify-between"><span class="font-bold">🚛 ${t('field') || 'حقل'}: ${h.farmName}</span><button onclick="deleteHarvest('${h.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></div><div>📅 ${h.date} | 🧾 ${t('cart') || 'عربة'} ${h.cartNumber}</div><div>${h.loadType==='box'?`📦 ${h.quantity} ${t('boxes') || 'صندوق'} (${t('each_box') || 'كل صندوق'} ${h.shwalPerBox} ${t('sacks') || 'شوال'})`:`🛒 ${h.quantity} ${t('sacks') || 'شوال'}`}</div><div class="font-bold text-amber-800">⚖️ ${h.totalShwals} ${t('sacks') || 'شوال'} | ${h.totalKg.toFixed(0)} ${t('kg') || 'كجم'} | ${h.totalTons.toFixed(2)} ${t('tons') || 'طن'}</div>${h.notes?`<div class="text-xs">📝 ${h.notes}</div>`:''}</div>`).join(''); 
+    document.getElementById('headerHarvests').innerHTML=filtered.length; 
+  }
+  function renderProfits() { 
+    let up=currentUserRole!=='admin'?productionsData.filter(p=>p.owner===currentUsername):productionsData; 
+    let totalProfit=up.reduce((s,p)=>s+p.profit,0); 
+    document.getElementById('totalNetProfit').innerHTML=totalProfit.toLocaleString(); 
+    let details=document.getElementById('profitDetails'); 
+    if(details) details.innerHTML=`<div class="grid grid-cols-2 gap-3 text-center"><div class="bg-green-50 p-3 rounded-xl">${t('revenue') || 'الإيرادات'}<br><strong>${(up.reduce((s,p)=>s+(p.qty*dataSettings.pricePerTon),0)).toLocaleString()} ${t('sdg') || 'ج.س'}</strong></div><div class="bg-red-50 p-3 rounded-xl">${t('costs') || 'التكاليف'}<br><strong>${up.reduce((s,p)=>s+p.totalCost,0).toLocaleString()} ${t('sdg') || 'ج.س'}</strong></div></div>`; 
+  }
+  function renderFertilizerProgram() { 
+    let container=document.getElementById('fertilizerProgramList'); if(!container) return; 
+    let doses=fertilizerPlans[currentModalFarm?.id]||[]; 
+    if(doses.length===0){container.innerHTML='<div class="text-center text-gray-500 py-4">'+t('no_fertilizer_doses')+'</div>';return;} 
+    let sorted=[...doses].sort((a,b)=>(a.days||999)-(b.days||999)); 
+    container.innerHTML=sorted.map(d=>`<div class="bg-amber-50 p-3 rounded-lg border-r-4 ${d.completed?'border-green-500':'border-amber-500'}"><div class="flex justify-between items-start"><div><div class="font-bold text-amber-800">🧪 ${d.name}</div><div class="text-sm">${t('amount') || 'الكمية'}: ${d.amount} ${t('kg_per_feddan') || 'كجم/فدان'}</div>${d.days?`<div class="text-xs">📅 ${t('after_days') || 'بعد'} ${d.days} ${t('day') || 'يوم'}</div>`:''}${d.date?`<div class="text-xs">📅 ${t('date') || 'التاريخ'}: ${d.date}</div>`:''}${d.notes?`<div class="text-xs text-gray-500">📝 ${d.notes}</div>`:''}${d.completed?`<div class="text-xs text-green-600">✅ ${t('completed_on') || 'تم التنفيذ'} ${new Date(d.completedDate).toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US')}</div>`:''}</div><div class="flex gap-1">${!d.completed?`<button onclick="window.completeDose('${d.id}')" class="bg-green-600 text-white px-2 py-1 rounded text-xs"><i class="fas fa-check"></i></button>`:''}<button onclick="window.deleteDose('${d.id}')" class="bg-red-600 text-white px-2 py-1 rounded text-xs"><i class="fas fa-trash"></i></button></div></div></div>`).join(''); 
+  }
+  function updateHeader() { 
+    let uf=currentUserRole!=='admin'?farmsData.filter(f=>f.owner===currentUsername):farmsData; 
+    let up=currentUserRole!=='admin'?productionsData.filter(p=>p.owner===currentUsername):productionsData; 
+    document.getElementById('headerFarms').innerHTML=uf.length; 
+    document.getElementById('headerProfit').innerHTML=up.reduce((s,p)=>s+p.profit,0).toLocaleString(); 
+    document.getElementById('headerProd').innerHTML=up.reduce((s,p)=>s+p.qty,0).toFixed(1); 
+  }
+  function updateFarmSelects() { 
+    let s1=document.getElementById('prodFarmSelect'), s2=document.getElementById('opFarmSelect'), s3=document.getElementById('harvestFarmSelect'); 
+    let filtered=currentUserRole!=='admin'?farmsData.filter(f=>f.owner===currentUsername):farmsData; 
+    let opts='<option value="">'+t('select_field')+'</option>'+filtered.map(f=>`<option value="${f.id}">${f.name}</option>`).join(''); 
+    if(s1) s1.innerHTML=opts; if(s2) s2.innerHTML=opts; if(s3) s3.innerHTML=opts; 
+  }
+  function initChart() { let ctx=document.getElementById('profitChart'); if(ctx) profitChart=new Chart(ctx,{type:'line',data:{labels:[],datasets:[{label:t('profit') || 'الربح (ج.س)',data:[],borderColor:'#2e7d32',fill:true,tension:0.4}]},options:{respon
