@@ -1,0 +1,11 @@
+{
+  "appId": "com.was.agri",
+  "appName": "WAS الزراعية",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
