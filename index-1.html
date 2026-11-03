@@ -1,0 +1,138 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>واس الزراعية 🥔</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#edf0ea;--cd:#fff;--tx:#2a2119;--mu:#7a6e62;--pr:#5a3e2b;--gr:#3f7d3a;--gl:#e3efe0;--sk:#c8a165;--bd:#dcd5ca;--dn:#b3261e}
+:root[data-t=d]{--bg:#16130f;--cd:#211c16;--tx:#efe7dc;--mu:#a3978a;--pr:#d9b38a;--gr:#7cc274;--gl:#26361f;--bd:#3a322a;--sk:#c8a165}
+*{box-sizing:border-box}body{margin:0;font-family:Cairo,system-ui,sans-serif;background:var(--bg);color:var(--tx);padding-bottom:70px}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--cd);margin:4px 0 10px}
+button{cursor:pointer;border:0;border-radius:8px;padding:10px 16px;background:var(--gr);color:#fff;font-weight:600}
+button.g{background:transparent;color:var(--pr);border:1px solid var(--bd)}button.x{background:var(--dn)}button.s{padding:4px 10px;font-size:.8rem}
+button:focus-visible,input:focus-visible,select:focus-visible,nav a:focus-visible{outline:3px solid var(--sk);outline-offset:1px}
+header{background:var(--pr);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:5}
+:root[data-t=d] header{background:#2c241b}header h1{margin:0;font-size:1.25rem;flex:1;font-weight:800}
+header button{background:rgba(255,255,255,.15);padding:6px 10px}
+main{max-width:900px;margin:0 auto;padding:14px}
+.c{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px}
+.c h3{margin:0 0 10px;font-size:1.05rem}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.st{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.st b{display:block;font-size:1.7rem;font-weight:800;color:var(--pr)}.st span{color:var(--mu);font-size:.85rem}
+.st.big{grid-column:span 2;background:var(--pr);border:0}.st.big b,.st.big span{color:#fff}
+.it{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--bd)}
+.it:last-child{border:0}.it small{color:var(--mu);display:block}.it.k{cursor:pointer}
+.al{background:#fdf0d5;color:#5c4100;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:.9rem}
+:root[data-t=d] .al{background:#3a2f12;color:#f2d58a}
+nav{position:fixed;bottom:0;inset-inline:0;background:var(--cd);border-top:1px solid var(--bd);display:flex;z-index:5}
+nav a{flex:1;text-align:center;padding:8px 2px;font-size:.75rem;color:var(--mu);cursor:pointer}nav a i{display:block;font-style:normal;font-size:1.2rem}
+nav a.on{color:var(--gr);font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:8px;text-align:start;border-bottom:1px solid var(--bd)}th{color:var(--mu)}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.mb{background:var(--bg);width:100%;max-width:700px;max-height:90vh;overflow:auto;border-radius:16px 16px 0 0;padding:14px}
+#lg{max-width:380px;margin:8vh auto;padding:16px}#lg h2{font-size:2rem;margin:0;color:var(--pr)}
+.tb{display:flex;gap:6px;margin-bottom:12px}.tb button{flex:1}
+.ok{color:var(--gr);font-weight:700}.er{color:var(--dn)}
+@media print{header,nav,.np{display:none!important}body{background:#fff;color:#000}}
+</style></head><body>
+<div id="app"></div>
+<script>
+const $=s=>document.querySelector(s),uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ls={g(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},s(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let db=ls.g('wase2_db',{fields:[],ops:[],harv:[],price:0,sackKg:50,crateKg:25}),
+users=ls.g('wase2_users',[{u:'admin',p:'admin123',r:'admin'},{u:'eng',p:'eng123',r:'eng'}]),
+me=ls.g('wase2_me',null),lang=ls.g('wase2_lang','ar'),tab='dash',theme=ls.g('wase2_t','l'),opF='';
+if(!db||!Array.isArray(db.fields)||!Array.isArray(db.ops)||!Array.isArray(db.harv))db={fields:[],ops:[],harv:[],price:0,sackKg:50,crateKg:25};
+if(!Array.isArray(users)||!users.length||!users.every(x=>x&&x.u&&x.p&&x.r))users=[{u:'admin',p:'admin123',r:'admin'},{u:'eng',p:'eng123',r:'eng'}];
+if(!(me&&me.u&&me.r))me=null;
+const save=()=>ls.s('wase2_db',db),isA=()=>me&&me.r==='admin';
+let cfg=ls.g('wase2_cfg',{url:'',token:'',key:''}),q=ls.g('wase2_q',[]),busy=false;
+if(!cfg||typeof cfg!='object')cfg={url:'',token:'',key:''};if(!Array.isArray(q))q=[];
+function push(kind,rec){q.push({kind,rec,user:me?me.u:'',at:new Date().toISOString()});ls.s('wase2_q',q);flush()}
+const NM={field:'حقل جديد',fert:'جرعة تسميد',op:'عملية',harvest:'حصاد',delete:'حذف',test:'اختبار الاتصال',snapshot:'نسخة كاملة'},LB={name:'الاسم',area:'المساحة',variety:'الصنف',date:'التاريخ',field:'الحقل',type:'النوع',dose:'الجرعة',cost:'التكلفة',note:'ملاحظات',sacks:'شوالات',crates:'صناديق',tons:'طن',what:'المحذوف'};
+async function flush(){if(busy||!(cfg.url||cfg.key)||!q.length||!navigator.onLine)return;busy=true;try{while(q.length){const x=q[0];
+if(cfg.url)await fetch(cfg.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({...x,token:cfg.token})});
+if(cfg.key){const msg='بواسطة: '+x.user+'\n'+(x.kind=='snapshot'?x.rec.fields.length+' حقل، '+x.rec.ops.length+' عملية، '+x.rec.harv.length+' حصاد':Object.entries(x.rec).map(([k,val])=>(LB[k]||k)+': '+val).join('\n'));
+const r=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({access_key:cfg.key,subject:'🥔 واس الزراعية — '+NM[x.kind],from_name:'واس الزراعية',message:msg})});
+const j=await r.json();if(!j.success)throw 0}
+q.shift();ls.s('wase2_q',q)}}catch(e){}busy=false}
+addEventListener('online',flush);
+const TR={ar:{dash:'الرئيسية',fields:'الحقول',ops:'العمليات',harv:'الحصاد',fin:'المالية',rep:'التقارير'},en:{dash:'Home',fields:'Fields',ops:'Operations',harv:'Harvest',fin:'Finance',rep:'Reports'}};
+const OPS={plow:'🚜 حرث',plant:'🌱 زراعة',irr:'💧 ري',fert:'🌿 تسميد',spray:'🧪 رش مبيدات',harv:'✂️ حصاد',other:'📌 أخرى'};
+const fmt=n=>(+n||0).toLocaleString('en',{maximumFractionDigits:2}),today=()=>new Date().toISOString().slice(0,10);
+const fn=id=>(db.fields.find(f=>f.id==id)||{name:'—'}).name;
+const tons=h=>((+h.sacks||0)*db.sackKg+(+h.crates||0)*db.crateKg)/1000;
+const fTons=id=>db.harv.filter(h=>h.fid==id).reduce((a,h)=>a+tons(h),0);
+const fCost=id=>db.ops.filter(o=>o.fid==id).reduce((a,o)=>a+(+o.cost||0),0);
+const totT=()=>db.harv.reduce((a,h)=>a+tons(h),0),totC=()=>db.ops.reduce((a,o)=>a+(+o.cost||0),0),net=()=>totT()*db.price-totC();
+const v=id=>$('#'+id).value;
+function toast(m){const d=document.createElement('div');d.textContent=m;d.style.cssText='position:fixed;top:70px;inset-inline:16px;max-width:360px;margin:auto;background:var(--pr);color:#fff;padding:10px;border-radius:8px;text-align:center;z-index:99';document.body.append(d);setTimeout(()=>d.remove(),1800)}
+function init(){document.documentElement.dataset.t=theme;document.documentElement.dir=lang==='ar'?'rtl':'ltr';document.documentElement.lang=lang;me?shell():login()}
+function login(mode='in'){$('#app').innerHTML=`<div id="lg"><h2>🥔 واس الزراعية</h2><p style="color:var(--mu)">نظام إدارة مزرعة البطاطس</p>
+<div class="tb"><button class="${mode=='in'?'':'g'}" onclick="login('in')">دخول</button><button class="${mode=='up'?'':'g'}" onclick="login('up')">حساب جديد</button></div>
+<label>اسم المستخدم<input id="lu" autocomplete="username"></label><label>كلمة المرور<input id="lp" type="password" autocomplete="current-password"></label>
+${mode=='up'?'<label>تأكيد كلمة المرور<input id="lp2" type="password"></label><small style="color:var(--mu)">الحسابات الجديدة بصلاحية مهندس. المدير يمنح الصلاحيات من التقارير.</small>':''}
+<p id="le" class="er"></p><button style="width:100%" onclick="${mode=='in'?'doIn()':'doUp()'}">${mode=='in'?'دخول':'إنشاء الحساب'}</button>
+${mode=='in'?'<p style="color:var(--mu);font-size:.8rem">تجريبي: admin / admin123 — eng / eng123</p>':''}</div>`;
+$('#lp').onkeydown=e=>e.key=='Enter'&&(mode=='in'?doIn():doUp())}
+function doIn(){const u=users.find(x=>x.u==v('lu').trim()&&x.p==v('lp'));if(!u)return $('#le').textContent='بيانات الدخول غير صحيحة';me=u;ls.s('wase2_me',u);shell()}
+function doUp(){const u=v('lu').trim(),p=v('lp');if(u.length<3||p.length<6)return $('#le').textContent='الاسم 3 أحرف على الأقل وكلمة المرور 6 أحرف';if(p!=v('lp2'))return $('#le').textContent='كلمتا المرور غير متطابقتين';if(users.some(x=>x.u==u))return $('#le').textContent='اسم المستخدم موجود';users.push({u,p,r:'eng'});ls.s('wase2_users',users);me=users.at(-1);ls.s('wase2_me',me);shell()}
+function logout(){me=null;localStorage.removeItem('wase2_me');login()}
+function shell(){const t=TR[lang],tabs=[['dash','🏠'],['fields','🌾'],['ops','📝'],['harv','🚜'],...(isA()?[['fin','💰']]:[]),['rep','📄']];
+$('#app').innerHTML=`<header class="np"><h1>🥔 واس الزراعية</h1><button onclick="lang=lang=='ar'?'en':'ar';ls.s('wase2_lang',lang);init()">${lang=='ar'?'EN':'عربي'}</button><button aria-label="الوضع الداكن" onclick="theme=theme=='l'?'d':'l';ls.s('wase2_t',theme);init()">${theme=='l'?'🌙':'☀️'}</button><button onclick="logout()">خروج</button></header><main id="m"></main>
+<nav class="np">${tabs.map(([k,i])=>`<a role="button" tabindex="0" class="${tab==k?'on':''}" onclick="tab='${k}';shell()"><i>${i}</i>${t[k]}</a>`).join('')}</nav>`;
+$('#m').innerHTML=({dash,fields,ops,harv,fin,rep})[tab]();if(tab=='fields')fl()}
+function dash(){const days=d=>Math.floor((Date.now()-new Date(d))/864e5);
+const al=db.fields.filter(f=>f.status!='done').map(f=>{const l=db.ops.filter(o=>o.fid==f.id&&o.type=='irr').map(o=>o.date).sort().at(-1);return!l?`⚠️ ${esc(f.name)}: لم يُسجَّل ري بعد`:days(l)>=6?`⚠️ ${esc(f.name)}: آخر ري منذ ${days(l)} أيام`:''}).filter(Boolean);
+const mx=Math.max(...db.fields.map(f=>fTons(f.id)),1),W=400/Math.max(db.fields.length,1);
+const bars=db.fields.map((f,i)=>{const h=fTons(f.id)/mx*110;return`<rect x="${i*W+W*.15}" y="${130-h}" width="${W*.7}" height="${h}" rx="4" fill="var(--gr)"/><text x="${i*W+W/2}" y="148" text-anchor="middle" font-size="11" fill="var(--mu)">${esc(f.name.slice(0,8))}</text><text x="${i*W+W/2}" y="${124-h}" text-anchor="middle" font-size="11" fill="var(--tx)">${fmt(fTons(f.id))}</text>`}).join('');
+return`<div class="g2"><div class="st big"><span>إجمالي الإنتاج (طن)</span><b>${fmt(totT())}</b></div><div class="st"><span>الحقول</span><b>${db.fields.length}</b></div><div class="st"><span>المساحة (فدان)</span><b>${fmt(db.fields.reduce((a,f)=>a+(+f.area||0),0))}</b></div>${isA()?`<div class="st"><span>صافي الربح</span><b class="${net()<0?'er':''}">${fmt(net())}</b></div>`:''}<div class="st"><span>عمليات الحصاد</span><b>${db.harv.length}</b></div></div><br>
+${al.map(a=>`<div class="al">${a}</div>`).join('')}
+<div class="c"><h3>الإنتاج لكل حقل (طن)</h3>${db.fields.length?`<svg viewBox="0 0 400 155" width="100%" role="img" aria-label="الإنتاج لكل حقل">${bars}</svg>`:'<p style="color:var(--mu)">أضف أول حقل من تبويب الحقول لتظهر الإحصائيات.</p>'}</div>
+<div class="c"><h3>آخر العمليات</h3>${db.ops.slice(-5).reverse().map(o=>`<div class="it"><div>${OPS[o.type]}<small>${esc(fn(o.fid))} · ${o.date}</small></div></div>`).join('')||'<p style="color:var(--mu)">لا توجد عمليات بعد.</p>'}</div>`}
+const fOpts=sel=>db.fields.map(f=>`<option value="${f.id}" ${f.id==sel?'selected':''}>${esc(f.name)}</option>`).join('')||'<option value="">أضف حقلاً أولاً</option>';
+function fields(){return`<div class="c"><h3>➕ إضافة حقل</h3><div class="r2"><label>اسم الحقل<input id="fa"></label><label>المساحة (فدان)<input id="fb" type="number" step="any"></label><label>الصنف<input id="fc" placeholder="سبونتا"></label><label>تاريخ الزراعة<input id="fd" type="date" value="${today()}"></label></div><button onclick="addF()">حفظ الحقل</button></div>
+<div class="c"><h3>الحقول المسجلة</h3><input id="fs" placeholder="بحث..." oninput="fl()"><div id="fl"></div></div>`}
+function fl(){const q=($('#fs')?.value||'').toLowerCase();$('#fl').innerHTML=db.fields.filter(f=>f.name.toLowerCase().includes(q)).map(f=>`<div class="it k" onclick="fDet('${f.id}')"><div><b>${esc(f.name)}</b><small>${fmt(f.area)} فدان · ${esc(f.variety||'—')} · زراعة ${f.date||'—'}</small></div><span class="ok">${fmt(fTons(f.id))} طن</span></div>`).join('')||'<p style="color:var(--mu)">لا توجد حقول مطابقة.</p>'}
+function addF(){const n=v('fa').trim();if(!n)return toast('أدخل اسم الحقل');const f={id:uid(),name:n,area:+v('fb')||0,variety:v('fc'),date:v('fd'),fert:[],status:'on'};db.fields.push(f);save();push('field',{name:f.name,area:f.area,variety:f.variety,date:f.date});shell();fl()}
+function fDet(id){const f=db.fields.find(x=>x.id==id),m=document.createElement('div');m.className='mo';m.onclick=e=>e.target==m&&m.remove();
+m.innerHTML=`<div class="mb"><div class="it"><h3 style="margin:0">${esc(f.name)}</h3><button class="g s" onclick="this.closest('.mo').remove()">✕</button></div>
+<div class="g2"><div class="st"><span>الإنتاج</span><b>${fmt(fTons(id))}</b></div><div class="st"><span>التكاليف</span><b>${fmt(fCost(id))}</b></div><div class="st"><span>إنتاجية الفدان (طن)</span><b>${fmt(f.area?fTons(id)/f.area:0)}</b></div></div><br>
+<div class="c"><h3>🌿 برنامج التسميد</h3>${f.fert.map(x=>`<div class="it"><div>${esc(x.type)}<small>${esc(x.dose)} · ${x.date}</small></div><button class="x s" onclick="delFert('${id}','${x.id}',this)">حذف</button></div>`).join('')||'<p style="color:var(--mu)">لا توجد جرعات.</p>'}
+<div class="r2"><input id="ft" placeholder="السماد (يوريا...)"><input id="fo" placeholder="الجرعة (50 كجم/فدان)"></div><input id="fdt" type="date" value="${today()}"><button onclick="addFert('${id}',this)">إضافة جرعة</button></div>
+<div class="c"><h3>📋 عمليات الحقل</h3>${db.ops.filter(o=>o.fid==id).reverse().map(o=>`<div class="it"><div>${OPS[o.type]}<small>${o.date}${o.note?' · '+esc(o.note):''}</small></div><span>${fmt(o.cost)}</span></div>`).join('')||'<p style="color:var(--mu)">لا توجد عمليات.</p>'}</div>
+<div class="r2"><button class="g" onclick="togF('${id}',this)">${f.status=='done'?'إعادة تفعيل الحقل':'إنهاء الموسم'}</button>${isA()?`<button class="x" onclick="delF('${id}',this)">حذف الحقل</button>`:''}</div></div>`;document.body.append(m)}
+const cls=b=>b.closest('.mo').remove();
+function addFert(id,b){const t=v('ft').trim();if(!t)return toast('أدخل اسم السمار');const F=db.fields.find(f=>f.id==id),x={id:uid(),type:t,dose:v('fo'),date:v('fdt')};F.fert.push(x);save();push('fert',{field:F.name,type:x.type,dose:x.dose,date:x.date});cls(b);fDet(id)}
+function delFert(id,x,b){const f=db.fields.find(f=>f.id==id);f.fert=f.fert.filter(z=>z.id!=x);save();cls(b);fDet(id)}
+function togF(id,b){const f=db.fields.find(f=>f.id==id);f.status=f.status=='done'?'on':'done';save();cls(b);shell()}
+function delF(id,b){if(!confirm('حذف الحقل وكل عملياته وحصاده؟'))return;push('delete',{what:'حقل كامل',field:fn(id),date:today()});db.fields=db.fields.filter(f=>f.id!=id);db.ops=db.ops.filter(o=>o.fid!=id);db.harv=db.harv.filter(h=>h.fid!=id);save();cls(b);shell()}
+function ops(){const L=db.ops.filter(o=>!opF||o.fid==opF).slice().reverse();
+return`<div class="c"><h3>📝 تسجيل عملية</h3><div class="r2"><label>الحقل<select id="oa">${fOpts()}</select></label><label>النوع<select id="ob">${Object.entries(OPS).map(([k,t])=>`<option value="${k}">${t}</option>`).join('')}</select></label><label>التاريخ<input id="oc" type="date" value="${today()}"></label><label>التكلفة<input id="od" type="number" step="any" value="0"></label></div><input id="oe" placeholder="ملاحظات (اختياري)"><button onclick="addO()">تسجيل العملية</button></div>
+<div class="c"><h3>سجل العمليات</h3><select onchange="opF=this.value;shell()"><option value="">كل الحقول</option>${fOpts(opF)}</select>${L.map(o=>`<div class="it"><div>${OPS[o.type]} — ${esc(fn(o.fid))}<small>${o.date}${o.note?' · '+esc(o.note):''}</small></div><div>${fmt(o.cost)} ${isA()?`<button class="x s" onclick="delO('${o.id}')">✕</button>`:''}</div></div>`).join('')||'<p style="color:var(--mu)">لا توجد عمليات.</p>'}</div>`}
+function addO(){if(!v('oa'))return toast('أضف حقلاً أولاً');const o={id:uid(),fid:v('oa'),type:v('ob'),date:v('oc'),cost:+v('od')||0,note:v('oe')};db.ops.push(o);save();push('op',{field:fn(o.fid),type:OPS[o.type],date:o.date,cost:o.cost,note:o.note});shell()}
+function delO(id){if(confirm('حذف العملية؟')){const o=db.ops.find(o=>o.id==id);if(o)push('delete',{what:'عملية '+OPS[o.type],field:fn(o.fid),date:o.date});db.ops=db.ops.filter(o=>o.id!=id);save();shell()}}
+function harv(){return`<div class="c"><h3>🚜 تسجيل حصاد</h3><div class="r2"><label>الحقل<select id="ha">${fOpts()}</select></label><label>التاريخ<input id="hd" type="date" value="${today()}"></label><label>شوالات<input id="hs" type="number" min="0" value="0" oninput="hsum()"></label><label>صناديق<input id="hc" type="number" min="0" value="0" oninput="hsum()"></label>
+<label>وزن الشوال (كجم)<input id="hks" type="number" value="${db.sackKg}" oninput="hsum()"></label><label>وزن الصندوق (كجم)<input id="hkc" type="number" value="${db.crateKg}" oninput="hsum()"></label></div>
+<div class="al" style="background:var(--gl);color:var(--tx)">📦 ملخص الحمولة: <b id="hsm">0 طن</b></div><button onclick="addH()">تسجيل الحصاد</button></div>
+<div class="c"><h3>سجل الحصاد</h3>${db.harv.slice().reverse().map(h=>`<div class="it"><div>${esc(fn(h.fid))}<small>${h.date} · ${h.sacks} شوال · ${h.crates} صندوق</small></div><div class="ok">${fmt(tons(h))} طن ${isA()?`<button class="x s" onclick="delH('${h.id}')">✕</button>`:''}</div></div>`).join('')||'<p style="color:var(--mu)">لا يوجد حصاد مسجل.</p>'}</div>`}
+function hsum(){const s=(+v('hs')*+v('hks')+ +v('hc')*+v('hkc'))/1000;$('#hsm').textContent=fmt(s)+' طن'}
+function addH(){if(!v('ha'))return toast('أضف حقلاً أولاً');const s=+v('hs')||0,c=+v('hc')||0;if(!s&&!c)return toast('أدخل عدد الشوالات أو الصناديق');db.sackKg=+v('hks')||50;db.crateKg=+v('hkc')||25;const h={id:uid(),fid:v('ha'),date:v('hd'),sacks:s,crates:c};db.harv.push(h);save();push('harvest',{field:fn(h.fid),date:h.date,sacks:s,crates:c,tons:tons(h)});shell()}
+function delH(id){if(confirm('حذف سجل الحصاد؟')){const h=db.harv.find(h=>h.id==id);if(h)push('delete',{what:'حصاد '+fmt(tons(h))+' طن',field:fn(h.fid),date:h.date});db.harv=db.harv.filter(h=>h.id!=id);save();shell()}}
+function fin(){return`<div class="c"><h3>💰 الأرباح</h3><label>سعر الطن<input id="pr" type="number" step="any" value="${db.price}" oninput="db.price=+this.value||0;save();fz()"></label><div id="fz"></div></div>
+<div class="c"><h3>ربحية كل حقل</h3><table><tr><th>الحقل</th><th>الإيراد</th><th>التكلفة</th><th>الصافي</th></tr>${db.fields.map(f=>{const r=fTons(f.id)*db.price,n=r-fCost(f.id);return`<tr><td>${esc(f.name)}</td><td>${fmt(r)}</td><td>${fmt(fCost(f.id))}</td><td class="${n<0?'er':'ok'}">${fmt(n)}</td></tr>`}).join('')}</table></div>`+(setTimeout(fz,0),'')}
+function fz(){const e=$('#fz');if(e)e.innerHTML=`<div class="g2"><div class="st"><span>الإيراد</span><b>${fmt(totT()*db.price)}</b></div><div class="st"><span>التكاليف</span><b>${fmt(totC())}</b></div><div class="st big"><span>صافي الربح</span><b>${fmt(net())}</b></div></div>`}
+function rep(){return`<div class="c"><h3>📄 تقرير المزرعة</h3><table><tr><th>الحقل</th><th>فدان</th><th>طن</th><th>طن/فدان</th>${isA()?'<th>التكلفة</th>':''}</tr>${db.fields.map(f=>`<tr><td>${esc(f.name)}</td><td>${fmt(f.area)}</td><td>${fmt(fTons(f.id))}</td><td>${fmt(f.area?fTons(f.id)/f.area:0)}</td>${isA()?`<td>${fmt(fCost(f.id))}</td>`:''}</tr>`).join('')}<tr><th>الإجمالي</th><th>${fmt(db.fields.reduce((a,f)=>a+(+f.area||0),0))}</th><th>${fmt(totT())}</th><th></th>${isA()?`<th>${fmt(totC())}</th>`:''}</tr></table>${isA()?`<p><b>صافي الربح: ${fmt(net())}</b></p>`:''}</div>
+<div class="c np"><h3>أدوات</h3><div class="r2"><button onclick="print()">🖨️ طباعة / PDF</button><button class="g" onclick="csv()">⬇️ تصدير Excel</button><button class="g" onclick="bk()">💾 نسخة احتياطية</button><button class="g" onclick="$('#rf').click()">📂 استعادة نسخة</button></div><input id="rf" type="file" accept=".json" hidden onchange="rs(this.files[0])"></div>
+<div class="c np"><h3>☁️ الإيميل و Google Sheets</h3><label>مفتاح الإيميل (Web3Forms) — يكفي وحده<input id="ck" dir="ltr" value="${esc(cfg.key||'')}"></label><label>رابط Apps Script (اختياري للشيت)<input id="cu" dir="ltr" value="${esc(cfg.url)}" placeholder="https://script.google.com/macros/s/.../exec"></label><label>الرمز السري<input id="ct" dir="ltr" value="${esc(cfg.token)}"></label><div class="r2"><button onclick="saveCfg()">حفظ</button><button class="g" onclick="saveCfg();push('test',{})">اختبار</button></div><button class="g" style="width:100%;margin-top:8px" onclick="saveCfg();snap()">إرسال كل البيانات الآن</button><small style="color:var(--mu);display:block;margin-top:8px">${(cfg.url||cfg.key)?(q.length?'⏳ بانتظار الإرسال: '+q.length:'✅ مفعّل'):'غير مفعّل'}</small></div>
+${isA()?`<div class="c np"><h3>المستخدمون</h3>${users.map(u=>`<div class="it"><div>${esc(u.u)}<small>${u.r=='admin'?'مدير':'مهندس'}</small></div>${u.u!=me.u?`<button class="g s" onclick="role('${esc(u.u)}')">${u.r=='admin'?'خفض إلى مهندس':'ترقية لمدير'}</button>`:''}</div>`).join('')}</div>`:''}`}
+function role(n){const u=users.find(x=>x.u==n);u.r=u.r=='admin'?'eng':'admin';ls.s('wase2_users',users);shell()}
+function dl(n,t,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;a.click()}
+function csv(){const r=[['الحقل','فدان','طن','تكلفة'],...db.fields.map(f=>[f.name,f.area,fTons(f.id),fCost(f.id)])];dl('wase-report.csv','\ufeff'+r.map(x=>x.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv')}
+function bk(){dl('wase-backup-'+today()+'.json',JSON.stringify(db),'application/json')}
+function rs(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.fields))throw 0;db=d;save();shell();toast('تمت الاستعادة')}catch(e){toast('الملف غير صالح')}};r.readText?0:r.readAsText(f)}
+function saveCfg(){cfg={url:v('cu').trim(),token:v('ct').trim(),key:v('ck').trim()};ls.s('wase2_cfg',cfg);flush();toast('تم الحفظ')}
+function snap(){push('snapshot',{fields:db.fields.map(f=>[f.name,f.area,f.variety,f.date]),ops:db.ops.map(o=>[fn(o.fid),OPS[o.type],o.date,o.cost,o.note]),harv:db.harv.map(h=>[fn(h.fid),h.date,h.sacks,h.crates,tons(h)])});toast('جاري الإرسال')}
+try{init();flush()}catch(e){document.body.innerHTML='<div style="padding:20px"><h3>حدث خطأ</h3><p>'+esc(e.message)+'</p><button onclick="localStorage.clear();location.reload()">مسح البيانات المحلية وإعادة التشغيل</button></div>'}
+</script></body></html>
