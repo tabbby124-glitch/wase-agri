@@ -184,7 +184,7 @@ async function fRep(id){const f=db.fields.find(x=>x.id==id);if(!f)return;const m
 const srt=(a,b)=>a.date<b.date?-1:1,os=db.ops.filter(o=>o.fid==id).sort(srt),hs=db.harv.filter(h=>h.fid==id).sort(srt),ph={};
 try{for(const o of os)for(const k of o.photos||[])ph[k]=await pGet(k)}catch(e){}
 const R=db.rep,A=isA(),t=fTons(id),c=fCost(id),E=esc,kv=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
-const h=`<div id="rp"><div class="np rb"><button onclick="window.print()">🖨️ طباعة / حفظ PDF</button><button class="g" onclick="cRp()">إغلاق</button></div><div class="pg">
+const h=`<div id="rp"><div class="np rb"><button onclick="printReport()">🖨️ طباعة / حفظ PDF</button><button class="g" onclick="cRp()">إغلاق</button></div><div class="pg">
 <div class="rh"><div class="rl">🥔</div><div><h1>${E(R.company)}</h1><p>تقرير متابعة حقل</p></div><div class="rd">${today()}</div></div>
 <h2>${E(f.name)}</h2>
 <div class="kvs">${kv('المساحة',fmt(f.area)+' فدان')}${kv('الصنف',E(f.variety||'—'))}${kv('تاريخ الزراعة',f.date||'—')}${kv('الحالة',f.status=='done'?'منتهي':'نشط')}${kv('إجمالي الإنتاج',fmt(t)+' طن')}${kv('إنتاجية الفدان',fmt(f.area?t/f.area:0)+' طن')}${kv('عدد العمليات',os.length)}${A?kv('إجمالي التكاليف',fmt(c)):''}${A&&db.price?kv('صافي الربح',fmt(t*db.price-c)):''}</div>
@@ -193,7 +193,7 @@ ${f.fert.length?`<h3>🌿 برنامج التسميد</h3><table><tr><th>الت�
 ${hs.length?`<h3>🚜 الحصاد</h3><table><tr><th>التاريخ</th><th>شوالات</th><th>صناديق</th><th>الوزن (طن)</th></tr>${hs.map(x=>`<tr><td>${x.date}</td><td>${x.sacks}</td><td>${x.crates}</td><td>${fmt(tons(x))}</td></tr>`).join('')}</table>`:''}
 <div class="sg"><div><small>أُعدّ بواسطة</small><br><b>${E(R.author)}</b></div><div><small>التاريخ</small><br><b>${today()}</b></div><div class="sl">التوقيع</div></div></div></div>`;
 document.body.insertAdjacentHTML('beforeend',h);document.body.classList.add('rpo')}
-function cRp(){const e=$('#rp');if(e)e.remove();document.body.classList.remove('rpo')}
+async function printReport(){const report=$('#rp');if(!report)return;const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.WASPrint;if(plugin&&plugin.print){try{const css=document.querySelector('style')?.innerHTML||'';const content='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+' body{background:#fff!important;color:#222!important;padding:0!important}#rp{position:static!important;overflow:visible!important;padding:0!important}.np{display:none!important}.pg{max-width:none!important;margin:0!important}@page{size:A4;margin:12mm}</style></head><body>'+report.innerHTML+'</body></html>';await plugin.print({html:content,title:'WAS - تقرير زراعي'});return}catch(e){console.error('Native print failed',e);toast('تعذرت الطباعة؛ جاري فتح خيار المتصفح')}}window.print()}\nfunction cRp(){const e=$('#rp');if(e)e.remove();document.body.classList.remove('rpo')}
 try{init();flush()}catch(e){document.body.innerHTML='<div style="padding:20px"><h3>حدث خطأ</h3><p>'+esc(e.message)+'</p><button onclick="localStorage.clear();location.reload()">مسح البيانات المحلية وإعادة التشغيل</button></div>'}
 </script>
 <script>if('serviceWorker' in navigator && location.protocol!=='file:'){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}</script>
