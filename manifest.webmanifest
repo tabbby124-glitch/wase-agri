@@ -1,0 +1,21 @@
+{
+  "name": "واس الزراعية — WAS Agri",
+  "short_name": "واس الزراعية",
+  "description": "إدارة الحقول والعمليات الزراعية والإنتاج والحصاد",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#edf0ea",
+  "theme_color": "#5a3e2b",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

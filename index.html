@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>واس الزراعية 🥔</title>
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#5a3e2b"><title>واس الزراعية 🥔</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#edf0ea;--cd:#fff;--tx:#2a2119;--mu:#7a6e62;--pr:#5a3e2b;--gr:#3f7d3a;--gl:#e3efe0;--sk:#c8a165;--bd:#dcd5ca;--dn:#b3261e}
@@ -142,8 +142,8 @@ ${isA()?`<div class="c np"><h3>المستخدمون</h3>${users.map(u=>`<div cla
 function role(n){const u=users.find(x=>x.u==n);u.r=u.r=='admin'?'eng':'admin';ls.s('wase2_users',users);shell()}
 function dl(n,t,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;a.click()}
 function csv(){const r=[['الحقل','فدان','طن','تكلفة'],...db.fields.map(f=>[f.name,f.area,fTons(f.id),fCost(f.id)])];dl('wase-report.csv','\ufeff'+r.map(x=>x.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv')}
-function bk(){dl('wase-backup-'+today()+'.json',JSON.stringify(db),'application/json')}
-function rs(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.fields))throw 0;db=d;save();shell();toast('تمت الاستعادة')}catch(e){toast('الملف غير صالح')}};r.readText?0:r.readAsText(f)}
+async function bk(){try{const photos={};for(const o of db.ops||[])for(const id of o.photos||[]){if(!(id in photos)){const data=await pGet(id);if(data)photos[id]=data}}const payload={format:'wase-agri-backup',version:2,exportedAt:new Date().toISOString(),db,photos};dl('wase-backup-'+today()+'.json',JSON.stringify(payload),'application/json');toast('تم إنشاء نسخة احتياطية تشمل الصور')}catch(e){toast('تعذر إنشاء النسخة الاحتياطية')}}
+async function rs(f){if(!f)return;if(f.size>50*1024*1024){toast('حجم الملف أكبر من 50 ميجابايت');return}if(!confirm('ستُستبدل بيانات التطبيق الحالية بالنسخة المختارة. هل تريد المتابعة؟'))return;const r=new FileReader();r.onload=async()=>{try{const raw=JSON.parse(r.result),payload=raw&&raw.format==='wase-agri-backup'?raw:null,d=payload?payload.db:raw;if(!d||!Array.isArray(d.fields)||!Array.isArray(d.ops)||!Array.isArray(d.harv))throw new Error('invalid');db=d;if(!db.rep||typeof db.rep!=='object')db.rep={company:'واس التجارية',author:'الطيب الرشيد الطيب'};save();if(payload&&payload.photos&&typeof payload.photos==='object'){for(const [id,data] of Object.entries(payload.photos)){if(typeof data==='string'&&data.startsWith('data:image/'))await pPut(id,data)}}shell();toast(payload?'تمت الاستعادة مع الصور':'تمت استعادة النسخة القديمة')}catch(e){toast('الملف غير صالح أو تالف')}};r.readAsText(f)}
 function saveCfg(){cfg={url:v('cu').trim(),token:v('ct').trim(),key:v('ck').trim()};ls.s('wase2_cfg',cfg);flush();toast('تم الحفظ')}
 function snap(){push('snapshot',{fields:db.fields.map(f=>[f.name,f.area,f.variety,f.date]),ops:db.ops.map(o=>[fn(o.fid),OPS[o.type],o.date,o.cost,o.note]),harv:db.harv.map(h=>[fn(h.fid),h.date,h.sacks,h.crates,tons(h)])});toast('جاري الإرسال')}
 function cmp(file){return new Promise(res=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{try{const k=Math.min(1,900/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.7))}catch(e){res(null)}URL.revokeObjectURL(u)};i.onerror=()=>{URL.revokeObjectURL(u);res(null)};i.src=u})}
@@ -168,4 +168,6 @@ ${hs.length?`<h3>🚜 الحصاد</h3><table><tr><th>التاريخ</th><th>ش�
 document.body.insertAdjacentHTML('beforeend',h);document.body.classList.add('rpo')}
 function cRp(){const e=$('#rp');if(e)e.remove();document.body.classList.remove('rpo')}
 try{init();flush()}catch(e){document.body.innerHTML='<div style="padding:20px"><h3>حدث خطأ</h3><p>'+esc(e.message)+'</p><button onclick="localStorage.clear();location.reload()">مسح البيانات المحلية وإعادة التشغيل</button></div>'}
-</script></body></html>
+</script>
+<script>if('serviceWorker' in navigator && location.protocol!=='file:'){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}</script>
+</body></html>
