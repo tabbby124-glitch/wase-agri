@@ -46,7 +46,7 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:8px;text
 @media print{header,nav,.np,.mo{display:none!important}body{background:#fff;color:#000;padding:0}body.rpo #app{display:none!important}#rp{position:static!important;overflow:visible!important;padding:0}}
 </style></head><body>
 <div id="app"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n<script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4"></script>\n<script>
 const $=s=>document.querySelector(s),uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ls={g(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},s(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
