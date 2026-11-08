@@ -1,0 +1,274 @@
+{
+  "name": "WAS - WhatsApp Farm Alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "was-agri-whatsapp-alerts",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "was-webhook",
+      "name": "Supabase Farm Activity",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "was-agri-whatsapp-alerts"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Configure these values before activating the workflow.\nconst CFG = {\n  hookSecret: 'REPLACE_WITH_A_LONG_RANDOM_SECRET',\n  supabaseUrl: 'https://pfjbbcckedkqbtsykelt.supabase.co',\n  whatsappTo: 'REPLACE_WITH_YOUR_PERSONAL_NUMBER_E164',\n  whatsappPhoneNumberId: 'REPLACE_WITH_META_PHONE_NUMBER_ID',\n};\nconst root = $input.first()?.json || {};\nconst headers = root.headers || {};\nconst supplied = headers['x-was-hook-secret'] || headers['X-WAS-HOOK-SECRET'];\nif (!CFG.hookSecret || CFG.hookSecret.startsWith('REPLACE_') || supplied !== CFG.hookSecret) return [];\nconst event = root.body || root;\nif (event.type !== 'INSERT' || event.table !== 'farm_activity') return [];\nconst record = event.record || {};\nconst p = record.payload || {};\nconst allowed = ['operation_created','operation_photos_added','harvest_created','field_report_opened'];\nif (!allowed.includes(p.event_kind)) return [];\nconst lines = ['🌱 WAS الزراعية'];\nif (p.event_kind === 'operation_created') {\n  lines.push('📝 عملية زراعية جديدة', `الحقل: ${p.field || '—'}`, `العملية: ${p.operation || '—'}`, `التاريخ: ${p.date || '—'}`);\n  if (p.note) lines.push(`ملاحظات: ${p.note}`);\n  if (p.cost) lines.push(`التكلفة: ${p.cost}`);\n  if (p.photo_count) lines.push(`الصور المرفقة: ${p.photo_count}`);\n} else if (p.event_kind === 'operation_photos_added') {\n  lines.push('📷 تمت إضافة صور لعملية زراعية', `الحقل: ${p.field || '—'}`, `العملية: ${p.operation || '—'}`, `التاريخ: ${p.date || '—'}`, `عدد الصور: ${(p.photo_paths || []).length || p.photo_count || 0}`);\n} else if (p.event_kind === 'harvest_created') {\n  lines.push('🚜 تسجيل حصاد جديد', `الحقل: ${p.field || '—'}`, `التاريخ: ${p.date || '—'}`, `الشوالات: ${p.sacks || 0}`, `الصناديق: ${p.crates || 0}`, `الإنتاج: ${p.tons || 0} طن`);\n} else if (p.event_kind === 'field_report_opened') {\n  lines.push('📄 تقرير حقل', `الحقل: ${p.field || '—'}`, `المساحة: ${p.area || 0} فدان`, `الصنف: ${p.variety || '—'}`, `الإنتاج: ${p.production_tons || 0} طن`, `إنتاجية الفدان: ${Number(p.yield_ton_per_feddan || 0).toFixed(2)} طن`, `العمليات: ${p.operations_count || 0}`, `سجلات الحصاد: ${p.harvest_records || 0}`);\n}\nconst message = lines.join('\\n');\nconst output = [{json:{kind:'text',to:CFG.whatsappTo,phoneNumberId:CFG.whatsappPhoneNumberId,message}}];\nfor (const path of (p.photo_paths || [])) output.push({json:{kind:'photo',to:CFG.whatsappTo,phoneNumberId:CFG.whatsappPhoneNumberId,path,caption:`📷 WAS الزراعية | ${p.field || 'الحقل'} | ${p.operation || 'صورة مرفقة'}`}});\nreturn output;"
+      },
+      "id": "was-normalize",
+      "name": "Filter and format WAS alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "is-photo",
+              "leftValue": "={{ $json.kind }}",
+              "rightValue": "photo",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "was-if-photo",
+      "name": "Photo or text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v26.0/{{$json.phoneNumberId}}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REPLACE_WITH_META_WHATSAPP_ACCESS_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({messaging_product:'whatsapp',to:$json.to,type:'text',text:{preview_url:false,body:$json.message}}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "was-send-text",
+      "name": "Send WhatsApp text",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        980,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://pfjbbcckedkqbtsykelt.supabase.co/storage/v1/object/sign/was-files/{{$json.path}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "REPLACE_WITH_SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REPLACE_WITH_SUPABASE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({expiresIn:3600}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "was-sign-photo",
+      "name": "Create private photo link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        980,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const CFG={supabaseUrl:'https://pfjbbcckedkqbtsykelt.supabase.co'};\nreturn $input.all().map((item,index)=>{\n  const src=$('Photo or text?').itemMatching(index).json;\n  const signed=item.json.signedURL || item.json.signedUrl;\n  if(!signed) throw new Error('Supabase did not return a signed photo URL');\n  const link=signed.startsWith('http')?signed:CFG.supabaseUrl+'/storage/v1'+(signed.startsWith('/')?signed:'/'+signed);\n  return {json:{to:src.to,phoneNumberId:src.phoneNumberId,imageLink:link,caption:src.caption}};\n});"
+      },
+      "id": "was-photo-link",
+      "name": "Prepare WhatsApp image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v26.0/{{$json.phoneNumberId}}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REPLACE_WITH_META_WHATSAPP_ACCESS_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({messaging_product:'whatsapp',to:$json.to,type:'image',image:{link:$json.imageLink,caption:$json.caption}}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "was-send-image",
+      "name": "Send WhatsApp image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1460,
+        180
+      ]
+    }
+  ],
+  "connections": {
+    "Supabase Farm Activity": {
+      "main": [
+        [
+          {
+            "node": "Filter and format WAS alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter and format WAS alert": {
+      "main": [
+        [
+          {
+            "node": "Photo or text?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Photo or text?": {
+      "main": [
+        [
+          {
+            "node": "Create private photo link",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send WhatsApp text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create private photo link": {
+      "main": [
+        [
+          {
+            "node": "Prepare WhatsApp image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare WhatsApp image": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
