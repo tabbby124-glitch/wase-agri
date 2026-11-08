@@ -165,6 +165,38 @@ const WAS_CLOUD_KEY='sb_publishable_Yz8ZHfjkAL5VoBbNIWD_BQ__TZqtevB';
 let wasCloudClient=null,wasCloudOrgId=localStorage.getItem('was_cloud_org_id')||null;
 function wasCloudInit(){if(!window.supabase||!window.supabase.createClient)throw new Error('تعذر تحميل مكتبة الاتصال السحابي. تحقق من الإنترنت ثم أعد تحميل التطبيق.');if(!wasCloudClient)wasCloudClient=window.supabase.createClient(WAS_CLOUD_URL,WAS_CLOUD_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});return wasCloudClient}
 function wasCloudMsg(t){const e=document.getElementById('wasCloudStatus');if(e)e.textContent=t; if(typeof toast==='function')toast(t)}
+let wasWaQueue=ls.g('was_wa_q',[]);
+if(!Array.isArray(wasWaQueue))wasWaQueue=[];
+let wasWaBusy=false;
+async function wasQueueActivity(recordType,payload){
+  const event={client_id:uid(),record_type:recordType,payload,created_at:new Date().toISOString()};
+  wasWaQueue.push(event);ls.s('was_wa_q',wasWaQueue);
+  await wasFlushActivity();
+}
+async function wasFlushActivity(){
+  if(wasWaBusy||!navigator.onLine||!wasWaQueue.length)return;
+  wasWaBusy=true;
+  try{
+    const c=wasCloudInit(),{data:{user},error:ue}=await c.auth.getUser();
+    if(ue)throw ue;if(!user)return;
+    if(!wasCloudOrgId){
+      const {data:ms,error:me}=await c.from('organization_members').select('organization_id').eq('user_id',user.id).limit(1);
+      if(me)throw me;if(!ms||!ms.length)return;
+      wasCloudOrgId=ms[0].organization_id;localStorage.setItem('was_cloud_org_id',wasCloudOrgId);
+    }
+    while(wasWaQueue.length){
+      const e=wasWaQueue[0];
+      const {error}=await c.from('farm_activity').upsert({
+        organization_id:wasCloudOrgId,client_id:e.client_id,record_type:e.record_type,
+        payload:e.payload,created_by:user.id
+      },{onConflict:'organization_id,client_id',ignoreDuplicates:true});
+      if(error)throw error;
+      wasWaQueue.shift();ls.s('was_wa_q',wasWaQueue);
+    }
+  }catch(e){console.warn('WAS activity queue:',e.message||e)}
+  finally{wasWaBusy=false}
+}
+
 async function wasCloudAuth(mode){try{const c=wasCloudInit(),email=document.getElementById('wasCloudEmail').value.trim(),password=document.getElementById('wasCloudPass').value;if(!email||password.length<8)throw new Error('أدخل بريداً صحيحاً وكلمة مرور من 8 أحرف على الأقل.');const r=mode==='signup'?await c.auth.signUp({email,password}):await c.auth.signInWithPassword({email,password});if(r.error)throw r.error;if(!r.data.session){wasCloudMsg('تم إنشاء الحساب. أكّد بريدك الإلكتروني ثم ارجع وسجّل الدخول لإنشاء المؤسسة.');return}const {data:{user},error:ue}=await c.auth.getUser();if(ue)throw ue;if(!user)throw new Error('تعذر التحقق من المستخدم.');const {data:ms,error:me}=await c.from('organization_members').select('organization_id,role').eq('user_id',user.id).limit(1);if(me)throw me;if(ms&&ms.length){wasCloudOrgId=ms[0].organization_id}else{const name=document.getElementById('wasCloudOrg').value.trim()||'WAS';const {data:o,error:oe}=await c.from('organizations').insert({name,created_by:user.id}).select('id').single();if(oe)throw oe;wasCloudOrgId=o.id}localStorage.setItem('was_cloud_org_id',wasCloudOrgId);wasCloudMsg('تم تسجيل الدخول وربط المؤسسة السحابية بنجاح.');}catch(e){wasCloudMsg('تعذر إكمال الدخول: '+(e.message||e))}}
 async function wasCloudSync(){try{const c=wasCloudInit(),{data:{user},error:ue}=await c.auth.getUser();if(ue)throw ue;if(!user)throw new Error('سجّل الدخول أولاً.');if(!wasCloudOrgId){const {data:ms,error:me}=await c.from('organization_members').select('organization_id').eq('user_id',user.id).limit(1);if(me)throw me;if(!ms||!ms.length)throw new Error('لا توجد مؤسسة مرتبطة بهذا الحساب. أنشئ حساب المؤسسة أولاً.');wasCloudOrgId=ms[0].organization_id;localStorage.setItem('was_cloud_org_id',wasCloudOrgId)}
 const {data:old,error:oe}=await c.from('farm_snapshots').select('id,version').eq('organization_id',wasCloudOrgId).eq('snapshot_key','main').maybeSingle();if(oe)throw oe;
@@ -175,7 +207,7 @@ async function wasCloudLogout(){try{if(wasCloudClient){const {error}=await wasCl
 function snap(){push('snapshot',{fields:db.fields.map(f=>[f.name,f.area,f.variety,f.date]),ops:db.ops.map(o=>[fn(o.fid),OPS[o.type],o.date,o.cost,o.note]),harv:db.harv.map(h=>[fn(h.fid),h.date,h.sacks,h.crates,tons(h)])});toast('جاري الإرسال')}
 function cmp(file){return new Promise(res=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{try{const k=Math.min(1,900/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.7))}catch(e){res(null)}URL.revokeObjectURL(u)};i.onerror=()=>{URL.revokeObjectURL(u);res(null)};i.src=u})}
 async function sv(fs){const ids=[];let bad=0;for(const f of fs){try{const d=await cmp(f);if(!d)throw 0;const k=uid();await pPut(k,d);ids.push(k)}catch(e){bad++}}return{ids,msg:ids.length?'✅ تم حفظ '+ids.length+' صورة'+(bad?' وتعذر '+bad:''):(fs.length?'⚠️ تعذر حفظ الصور — افتح التطبيق في Chrome عادي (ليس نافذة خاصة أو متصفح داخل تطبيق)':'')}}
-function addP(id){const i=document.createElement('input');i.type='file';i.accept='image/*';i.multiple=true;i.onchange=async()=>{const o=db.ops.find(x=>x.id==id);if(!o||!i.files.length)return;toast('جاري معالجة الصور...');const r=await sv([...i.files].slice(0,6));o.photos=(o.photos||[]).concat(r.ids);save();toast(r.msg);shell()};i.click()}
+function addP(id){const i=document.createElement('input');i.type='file';i.accept='image/*';i.multiple=true;i.onchange=async()=>{const o=db.ops.find(x=>x.id==id);if(!o||!i.files.length)return;toast('جاري معالجة الصور...');const r=await sv([...i.files].slice(0,6));o.photos=(o.photos||[]).concat(r.ids);save();if(r.ids.length)wasQueueActivity('operation',{event_kind:'operation_photos_added',field:fn(o.fid),operation:OPS[o.type],date:o.date,photo_count:r.ids.length,photo_ids:r.ids});toast(r.msg);shell()};i.click()}
 const idb=()=>new Promise((ok,no)=>{const r=indexedDB.open('wase2_photos',1);r.onupgradeneeded=()=>r.result.createObjectStore('p');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
 async function pPut(k,val){const d=await idb();return new Promise((ok,no)=>{const t=d.transaction('p','readwrite');t.objectStore('p').put(val,k);t.oncomplete=ok;t.onerror=()=>no(t.error)})}
 async function pGet(k){const d=await idb();return new Promise(ok=>{const r=d.transaction('p').objectStore('p').get(k);r.onsuccess=()=>ok(r.result);r.onerror=()=>ok(null)})}
@@ -194,6 +226,14 @@ ${hs.length?`<h3>🚜 الحصاد</h3><table><tr><th>التاريخ</th><th>ش�
 <div class="sg"><div><small>أُعدّ بواسطة</small><br><b>${E(R.author)}</b></div><div><small>التاريخ</small><br><b>${today()}</b></div><div class="sl">التوقيع</div></div></div></div>`;
 document.body.insertAdjacentHTML('beforeend',h);document.body.classList.add('rpo')}
 async function printReport(){const report=$('#rp');if(!report)return;const plugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.WASPrint;if(plugin&&plugin.print){try{const css=document.querySelector('style')?.innerHTML||'';const content='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+' body{background:#fff!important;color:#222!important;padding:0!important}#rp{position:static!important;overflow:visible!important;padding:0!important}.np{display:none!important}.pg{max-width:none!important;margin:0!important}@page{size:A4;margin:12mm}</style></head><body>'+report.innerHTML+'</body></html>';await plugin.print({html:content,title:'WAS - تقرير زراعي'});return}catch(e){console.error('Native print failed',e);toast('تعذرت الطباعة؛ جاري فتح خيار المتصفح')}}window.print()}\nfunction cRp(){const e=$('#rp');if(e)e.remove();document.body.classList.remove('rpo')}
+
+const _wasAddO=addO;
+addO=async function(){const before=db.ops.length;await _wasAddO();if(db.ops.length>before){const o=db.ops.at(-1);await wasQueueActivity('operation',{event_kind:'operation_created',field:fn(o.fid),operation:OPS[o.type],date:o.date,cost:o.cost,note:o.note||'',photo_count:(o.photos||[]).length});}};
+const _wasAddH=addH;
+addH=function(){const before=db.harv.length;_wasAddH();if(db.harv.length>before){const h=db.harv.at(-1);wasQueueActivity('harvest',{event_kind:'harvest_created',field:fn(h.fid),date:h.date,sacks:h.sacks,crates:h.crates,tons:tons(h)});}};
+const _wasFRep=fRep;
+fRep=async function(id){await _wasFRep(id);const f=db.fields.find(x=>x.id==id);if(f)await wasQueueActivity('note',{event_kind:'field_report_opened',field:f.name,area:f.area,variety:f.variety||'',planting_date:f.date||'',production_tons:fTons(id),yield_ton_per_feddan:f.area?fTons(id)/f.area:0,operations_count:db.ops.filter(o=>o.fid==id).length,harvest_records:db.harv.filter(h=>h.fid==id).length});};
+addEventListener('online',()=>wasFlushActivity());
 try{init();flush()}catch(e){document.body.innerHTML='<div style="padding:20px"><h3>حدث خطأ</h3><p>'+esc(e.message)+'</p><button onclick="localStorage.clear();location.reload()">مسح البيانات المحلية وإعادة التشغيل</button></div>'}
 </script>
 <script>if('serviceWorker' in navigator && location.protocol!=='file:'){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}</script>
