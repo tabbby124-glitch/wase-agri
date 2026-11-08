@@ -240,6 +240,8 @@ async function printReport(){const report=$('#rp');if(!report)return;const plugi
 
 const _wasAddO=addO;
 addO=async function(){const before=db.ops.length;await _wasAddO();if(db.ops.length>before){const o=db.ops.at(-1);await wasQueueActivity('operation',{event_kind:'operation_created',field:fn(o.fid),operation:OPS[o.type],date:o.date,cost:o.cost,note:o.note||'',photo_count:(o.photos||[]).length});}};
+const _wasAddFert=addFert;
+addFert=async function(id,b){const before=(db.fields.find(f=>f.id==id)?.fert||[]).length;_wasAddFert(id,b);const f=db.fields.find(x=>x.id==id);if(f&&f.fert.length>before){const x=f.fert.at(-1);await wasQueueActivity('operation',{event_kind:'operation_created',field:f.name,operation:'🌿 تسميد',fertilizer:x.type,dose:x.dose,date:x.date});}};
 const _wasAddH=addH;
 addH=function(){const before=db.harv.length;_wasAddH();if(db.harv.length>before){const h=db.harv.at(-1);wasQueueActivity('harvest',{event_kind:'harvest_created',field:fn(h.fid),date:h.date,sacks:h.sacks,crates:h.crates,tons:tons(h)});}};
 const _wasFRep=fRep;
