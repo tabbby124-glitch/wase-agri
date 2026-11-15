@@ -66,6 +66,10 @@ create table if not exists public.cost_allocations (
 create index if not exists cost_fields_search_idx on public.cost_fields(organization_id, field_code, farmer_name);
 create index if not exists cost_entries_season_date_idx on public.cost_entries(organization_id, season_id, entry_date desc);
 create index if not exists cost_allocations_field_idx on public.cost_allocations(organization_id, field_id);
+create index if not exists cost_allocations_org_entry_idx on public.cost_allocations(organization_id,cost_entry_id);
+create index if not exists cost_entries_created_by_idx on public.cost_entries(created_by);
+create index if not exists cost_fields_created_by_idx on public.cost_fields(created_by);
+create index if not exists cost_seasons_created_by_idx on public.cost_seasons(created_by);
 alter table public.cost_seasons enable row level security;
 alter table public.cost_fields enable row level security;
 alter table public.cost_entries enable row level security;
