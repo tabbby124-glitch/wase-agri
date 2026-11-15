@@ -254,4 +254,5 @@ addEventListener('online',()=>wasFlushActivity());
 try{init();flush()}catch(e){document.body.innerHTML='<div style="padding:20px"><h3>حدث خطأ</h3><p>'+esc(e.message)+'</p><button onclick="localStorage.clear();location.reload()">مسح البيانات المحلية وإعادة التشغيل</button></div>'}
 </script>
 <script>if('serviceWorker' in navigator && location.protocol!=='file:'){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}</script>
+<script>(()=>{if(document.getElementById('was-costs-shortcut'))return;const a=document.createElement('a');a.id='was-costs-shortcut';a.href='./costs/index.html';a.textContent='💰 إدارة تكاليف التقاوي';a.style.cssText='position:fixed;bottom:82px;inset-inline-end:14px;z-index:99999;background:#24583b;color:white;padding:13px 16px;border-radius:28px;text-decoration:none;font:700 14px system-ui;box-shadow:0 3px 14px #0004';document.body.appendChild(a)})();</script>
 </body></html>
