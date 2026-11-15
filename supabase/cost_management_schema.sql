@@ -70,12 +70,8 @@ alter table public.cost_seasons enable row level security;
 alter table public.cost_fields enable row level security;
 alter table public.cost_entries enable row level security;
 alter table public.cost_allocations enable row level security;
-do $$
-declare t text;
-begin
- foreach t in array array['cost_seasons','cost_fields','cost_entries','cost_allocations'] loop
-  execute format('drop policy if exists "org members manage %1$s" on public.%1$I',t);
-  execute format('create policy "org members manage %1$s" on public.%1$I for all to authenticated using (exists (select 1 from public.organization_members m where m.organization_id = %1$I.organization_id and m.user_id = (select auth.uid()))) with check (exists (select 1 from public.organization_members m where m.organization_id = %1$I.organization_id and m.user_id = (select auth.uid())))',t);
- end loop;
-end $$;
+create policy "org members manage cost seasons" on public.cost_seasons for all to authenticated using (private.is_org_member(organization_id)) with check (private.is_org_member(organization_id));
+create policy "org members manage cost fields" on public.cost_fields for all to authenticated using (private.is_org_member(organization_id)) with check (private.is_org_member(organization_id));
+create policy "org members manage cost entries" on public.cost_entries for all to authenticated using (private.is_org_member(organization_id)) with check (private.is_org_member(organization_id));
+create policy "org members manage cost allocations" on public.cost_allocations for all to authenticated using (private.is_org_member(organization_id)) with check (private.is_org_member(organization_id));
 grant select,insert,update,delete on public.cost_seasons,public.cost_fields,public.cost_entries,public.cost_allocations to authenticated;
